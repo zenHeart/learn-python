@@ -1,0 +1,1 @@
+import{o as e,c as r,d as l}from"./app.146ab500.js";const i='{"title":"输入输出","description":"","frontmatter":{},"headers":[{"level":2,"title":"知识点","slug":"知识点"}],"relativePath":"_draft/api.md","lastUpdated":1620547448086}',o={},t=l('',3);o.render=function(l,i,o,a,d,c){return e(),r("div",null,[t])};export default o;export{i as __pageData};

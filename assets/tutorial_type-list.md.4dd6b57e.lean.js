@@ -1,0 +1,1 @@
+import{o as l,c as i,d as e}from"./app.146ab500.js";const o='{"title":"list","description":"","frontmatter":{},"headers":[{"level":2,"title":"知识点","slug":"知识点"}],"relativePath":"tutorial/type-list.md","lastUpdated":1620547448086}',d={},t=e('',3);d.render=function(e,o,d,s,c,r){return l(),i("div",null,[t])};export default d;export{o as __pageData};
