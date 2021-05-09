@@ -1,0 +1,25 @@
+{
+  "name": "learn-python",
+  "version": "1.0.0",
+  "description": "放置学习 python 的各种资料.",
+  "main": "index.js",
+  "dependencies": {
+    "vitepress": "^0.13.2"
+  },
+  "scripts": {
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:serve": "vitepress serve docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zenHeart/learn-python.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/zenHeart/learn-python/issues"
+  },
+  "homepage": "https://github.com/zenHeart/learn-python#readme"
+}

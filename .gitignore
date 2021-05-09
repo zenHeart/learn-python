@@ -1,0 +1,7 @@
+node_modules
+todo.md
+.idea
+*.log
+tempCodeRunnerFile.py
+__pycache__
+dist
