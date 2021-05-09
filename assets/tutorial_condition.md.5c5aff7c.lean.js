@@ -1,0 +1,1 @@
+import{o as l,c as i,d as e}from"./app.146ab500.js";const d='{"title":"条件判断","description":"","frontmatter":{},"headers":[{"level":2,"title":"知识点","slug":"知识点"}],"relativePath":"tutorial/condition.md","lastUpdated":1620545091167}',o={},a=e('',3);o.render=function(e,d,o,t,r,c){return l(),i("div",null,[a])};export default o;export{d as __pageData};
