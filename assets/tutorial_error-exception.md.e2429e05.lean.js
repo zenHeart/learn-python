@@ -1,0 +1,1 @@
+import{o as e,c as l,d as o}from"./app.146ab500.js";const i='{"title":"错误和异常","description":"","frontmatter":{},"headers":[{"level":2,"title":"知识点","slug":"知识点"}],"relativePath":"tutorial/error-exception.md","lastUpdated":1620547752514}',r={},c=o('',3);r.render=function(o,i,r,t,d,n){return e(),l("div",null,[c])};export default r;export{i as __pageData};
