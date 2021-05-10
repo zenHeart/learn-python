@@ -16,7 +16,9 @@ class ClassName:
 
 <<< ./examples/class/define.py
 
+可以直接在 class 中使用 `if, for` 等语句。
 
+<<< ./examples/class/define-with-statement.py
 
 ### 实例化
 采用 `ClassName()` 方式实例化类
@@ -28,33 +30,63 @@ class ClassName:
 :::
 
 ### __init__
+
 通常会采用 `__init__` 方法，在实例化类时，
 初始化类的相关参数。
 
 <<< ./examples/class/init.py
 
+### 实例属性和类属性
+`self.name,self.age` 属于实例属性。
+可以直接在类上定义共有的属性。该属性所有实例共享。
+
+<<< ./examples/class/class-attr.py
+
+当在类的实例上定义了和类属性同名的变量时，解释器会优先返回实例上定义的变量。
+
+<<< ./examples/class/class-attr-over.py
+
+### 方法
+类中定义的函数可以通过类或者实例采用 `.` 号进行调用。
+
+<<< ./examples/class/method.py
+
+即使把方法赋值给其他变量，解释器任会根据赋值情况正常执行。
+
+<<< ./examples/class/method_assign.py
+
+甚至可以将方法定义在函数外。
+
+<<< ./examples/class/method_define_outside.py
+
+:::tip
+注意上述调用方式的区别，当采用实例方式调用，或者变量赋值为实例方法进行调用时，
+解释器会自动注入实例，而采用类方式或者直接使用函数方式调用时则需手动传入实例变量。
+:::
+
+### 其他属性
+#### __doc__
+类同样支持注释，可通过 `__doc__` 查看注释
+
+<<< ./examples/class/class_attr_doc.py
+
+#### __class__
+`__class__` 指向实例化对象的类。
+
+<<< ./examples/class/class_attr_class.py
+
+::: tip
+注意类对象的 `__class__` 指向内部的对象，所以 `C.__class__ == C` 返回 false, 而 `c1` 由 `C` 实例化创建，所以 `c1.__class__ == C` 返回 True 
+:::
+
+### 可迭代实例
+为了使类变为可循环对象可以在内部定义 `__inter__` 方法，当使用 `for` 语句时，可使用
+
 
 
 ## 知识点
-* 基础概念
-  * `namespace` 
-    * ptyhon 解释器启动时会创建内部命名空间，无法删除
-    * 全局命名空间在模块导入时创建
-    * 本地命名空间在函数申明时创建
-  * `scope` 作用域是指可以直接访问的命名空间范围，为静态作用域
-    * 现在本地命名空间查找
-    * 全局命名空间查找
-    * 内建命名空间查找
-    * `nonlocal` 查找非本地空间变量
-    * class 定义有独立的命名空间
-    * 无 `global, nonlocal` 时，赋值语句永远在 `最内层的命名空间`，赋值语句只用于绑定名称到命名空间。
-    * `import，函数定义` 绑定命名空间在内层
-    * 示例说明 `nonlocal, global` 对作用域的影响
-    * 
-  * `.` 引用的内容都成称为属性
-    * 可写的属性可以采用 `del` 删除
-* 类语法
-  * 申明类, 会创建一个新的本地命名空间
+* [X] 类的语法
+  
    ```
    class ClassName:
       <statement-1>
