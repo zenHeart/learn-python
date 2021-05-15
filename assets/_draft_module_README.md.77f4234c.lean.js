@@ -1,0 +1,1 @@
+import{o as e,c as t,d as l}from"./app.146ab500.js";const a='{"title":"模块","description":"","frontmatter":{},"headers":[{"level":2,"title":"知识点","slug":"知识点"}],"relativePath":"_draft/module/README.md","lastUpdated":1621040075637}',o={},i=l('',3);o.render=function(l,a,o,d,r,n){return e(),t("div",null,[i])};export default o;export{a as __pageData};

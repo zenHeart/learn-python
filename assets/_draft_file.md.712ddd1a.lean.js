@@ -1,1 +1,0 @@
-import{o as e,c as l,d as i}from"./app.146ab500.js";const d='{"title":"文件操作","description":"","frontmatter":{},"headers":[{"level":2,"title":"知识点","slug":"知识点"}],"relativePath":"_draft/file.md","lastUpdated":1620547752510}',o={},c=i('',3);o.render=function(i,d,o,a,r,t){return e(),l("div",null,[c])};export default o;export{d as __pageData};

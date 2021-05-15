@@ -1,0 +1,1 @@
+import{o as l,c as e,d as i}from"./app.146ab500.js";const d='{"title":"tuple","description":"","frontmatter":{},"headers":[{"level":2,"title":"知识点","slug":"知识点"}],"relativePath":"tutorial/type-tuple.md","lastUpdated":1621040075637}',o={},a=i('',3);o.render=function(i,d,o,c,t,u){return l(),e("div",null,[a])};export default o;export{d as __pageData};
