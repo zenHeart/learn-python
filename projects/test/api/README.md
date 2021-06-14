@@ -22,7 +22,8 @@
 3. 生成 html 报告
    
    ```bash
-   pytest --html=report.html 
+   # 将报告输出到 report 文件夹
+   pytest --html=report/index.html 
    ```
 
    详细参考 [pytest](https://pytest-html.readthedocs.io/en/latest/user_guide.html)
