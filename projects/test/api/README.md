@@ -19,3 +19,10 @@
    ```bash
    ptw
    ```
+3. 生成 html 报告
+   
+   ```bash
+   pytest --html=report.html 
+   ```
+
+   详细参考 [pytest](https://pytest-html.readthedocs.io/en/latest/user_guide.html)
