@@ -12,7 +12,7 @@ pyenv
 ---
 
 ## 概述
-[pyenv](https://github.com/pyenv/pyenv#homebrew-on-mac-os-x)
+[pyenv](https://github .com/pyenv/pyenv#homebrew-on-mac-os-x)
 是 python 的版本切换工具
 
 ## 快速入门
