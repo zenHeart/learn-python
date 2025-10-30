@@ -1,0 +1,1 @@
+import{o as e,c as r,d as t}from"./app.146ab500.js";const a='{"title":"genretor","description":"","frontmatter":{},"headers":[{"level":2,"title":"知识点","slug":"知识点"}],"relativePath":"_draft/generator.md","lastUpdated":1761808228099}',o={},n=t('',3);o.render=function(t,a,o,l,s,d){return e(),r("div",null,[n])};export default o;export{a as __pageData};
