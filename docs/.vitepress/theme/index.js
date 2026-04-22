@@ -2,45 +2,5 @@ import DefaultTheme from 'vitepress/theme'
 import './pyodide.css'
 
 export default {
-  extends: DefaultTheme,
-  head: {
-    script: [
-      {
-        src: 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js',
-        defer: true
-      },
-      {
-        text: `
-window.__loadPyodide = async () => {
-  if (window.__pyodideInstance) return window.__pyodideInstance
-  window.__pyodideInstance = await window.loadPyodide()
-  return window.__pyodideInstance
-}
-window.__runPyDemo = async function(button) {
-  const container = button.closest('.py-demo')
-  if (!container || button.classList.contains('running')) return
-  const outputEl = container.querySelector('.py-demo-output')
-  const preEl = container.querySelector('pre code')
-  const safeCode = preEl ? preEl.textContent : ''
-  button.classList.add('running')
-  button.textContent = '⏳ Running...'
-  outputEl.textContent = 'Loading...'
-  outputEl.classList.remove('error')
-  try {
-    const py = await window.__loadPyodide()
-    outputEl.textContent = 'Running...'
-    const result = await py.runPythonAsync(safeCode)
-    outputEl.textContent = result || '(no output)'
-  } catch (e) {
-    outputEl.textContent = 'Error: ' + e.message
-    outputEl.classList.add('error')
-  } finally {
-    button.classList.remove('running')
-    button.textContent = 'Run'
-  }
-}
-`
-      }
-    ]
-  }
+  extends: DefaultTheme
 }

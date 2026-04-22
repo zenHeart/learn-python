@@ -33,6 +33,11 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
 }
 
+// Inject Pyodide scripts into <head> - runs on both SSR and client
+// but window.__runPyDemo only executes in browser (DOMContentLoaded guard)
+var pyodideScript = 'window.__loadPyodide=async function(){if(window.__pyodideInstance)return window.__pyodideInstance;window.__pyodideInstance=await window.loadPyodide();return window.__pyodideInstance};'
+var runHandler = 'window.__runPyDemo=async function(b){var c=b.closest(".py-demo");if(!c||b.classList.contains("running"))return;var o=c.querySelector(".py-demo-output"),p=c.querySelector("pre code"),s=p?p.textContent:"";b.classList.add("running");b.textContent="Running...";o.textContent="Loading...";o.classList.remove("error");try{var py=await window.__loadPyodide();o.textContent="Running...";var r=await py.runPythonAsync(s);o.textContent=r||"(no output)"}catch(e){o.textContent="Error: "+e.message;o.classList.add("error")}finally{b.classList.remove("running");b.textContent="Run"}}'
+
 module.exports = {
   title: 'learn-python',
   description: 'Python 交互式学习站 — 边学边练，掌握 Agent 开发能力',
@@ -42,6 +47,10 @@ module.exports = {
       md.use(createPyodidePlugin)
     }
   },
+  head: [
+    ['script', { src: 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js', defer: true }],
+    ['script', { text: pyodideScript + runHandler }]
+  ],
   themeConfig: {
     nav: [
       { text: '首页', link: '/' },
