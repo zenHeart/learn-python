@@ -45,31 +45,7 @@ module.exports = {
   themeConfig: {
     nav: [
       { text: '首页', link: '/' },
-      { text: '学习进度', link: '/progress' },
-      { text: '快速入门', link: '/tutorial/begin' }
-    ],
-    sidebar: [
-      {
-        text: '首页',
-        link: '/'
-      },
-      {
-        text: '学习进度',
-        link: '/progress'
-      },
-      {
-        text: '快速入门',
-        link: '/tutorial/begin'
-      },
-      {
-        text: '语言基础',
-        children: [
-          { text: '数据类型', link: '/tutorial/types' },
-          { text: '语句', link: '/tutorial/statement' },
-          { text: '函数', link: '/tutorial/function' },
-          { text: '类', link: '/tutorial/class' }
-        ]
-      }
+      { text: '学习进度', link: '/progress' }
     ]
   }
 }

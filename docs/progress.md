@@ -97,4 +97,4 @@ print("Welcome to learn-python!")
 
 ## 开始学习 →
 
-[进入第 1 课：Hello Python](/tutorial/begin)
+[进入第 1 课：Hello Python](/)
