@@ -29,10 +29,13 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
 }
 
-// Dev: CDN (faster iteration); Prod: local files under base path
+// Dev: CDN; Prod: local files
 var pyodideBase = isDev 
   ? 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/' 
   : '/learn-python/pyodide/'
+
+// Note: public files are at root, not under base
+var pyodideInit = isDev ? '/pyodide-init.js' : '/learn-python/pyodide-init.js'
 
 module.exports = {
   title: 'learn-python',
@@ -45,8 +48,7 @@ module.exports = {
   },
   head: [
     ['script', { src: pyodideBase + 'pyodide.js', defer: true }],
-    ['script', { text: 'window.__pyodideInstance=null;window.__loadPyodide=async function(){if(window.__pyodideInstance)return window.__pyodideInstance;window.__pyodideInstance=await window.loadPyodide({indexURL:"' + pyodideBase + '"});return window.__pyodideInstance}' }],
-    ['script', { text: 'window.__runPyDemo=async function(b){var c=b.closest(".py-demo");if(!c||b.classList.contains("running"))return;var o=c.querySelector(".py-demo-output"),p=c.querySelector("pre code"),s=p?p.textContent:"";b.classList.add("running");b.textContent="Running...";o.textContent="Loading...";o.classList.remove("error");try{var py=await window.__loadPyodide();o.textContent="Running...";var r=await py.runPythonAsync(s);o.textContent=r||"(no output)"}catch(e){o.textContent="Error: "+e.message;o.classList.add("error")}finally{b.classList.remove("running");b.textContent="Run"}};document.addEventListener("click",function(e){var b=e.target.closest(".py-demo-run");if(b&&window.__runPyDemo)window.__runPyDemo(b)})' }]
+    ['script', { src: pyodideInit }]
   ],
   themeConfig: {
     nav: [
