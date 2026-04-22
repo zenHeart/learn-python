@@ -29,9 +29,8 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
 }
 
-// Use local Pyodide files (in public/learn-python/pyodide/)
-// Dev: CDN for faster iteration; Prod: local files for reliability
-var pyodideBase = isDev ? 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/' : '/learn-python/pyodide/'
+// Dev: CDN; Prod: local files at /pyodide/ (VitePress will prepend /learn-python/ to make /learn-python/pyodide/)
+var pyodideBase = isDev ? 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/' : '/pyodide/'
 
 module.exports = {
   title: 'learn-python',
