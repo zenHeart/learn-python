@@ -11,12 +11,8 @@ function createPyodidePlugin(md) {
 
     if (lang === 'python' || lang === 'py') {
       var code = token.content
-      var encoded = encodeURIComponent(code)
-      return '<div class="py-demo" data-code="' + encoded + '">' +
-        '<div class="py-demo-header">' +
-        '<span>Python</span>' +
-        '<button class="py-demo-run" onclick="window.__runPyDemo(this)">Run</button>' +
-        '</div>' +
+      return '<div class="py-demo">' +
+        '<div class="py-demo-header"><span>Python</span><button class="py-demo-run" type="button">Run</button></div>' +
         '<pre class="language-python"><code>' + escapeHtml(code) + '</code></pre>' +
         '<div class="py-demo-output">Click Run to see output</div>' +
         '</div>'
@@ -33,10 +29,9 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
 }
 
-// Inject Pyodide scripts into <head> - runs on both SSR and client
-// but window.__runPyDemo only executes in browser (DOMContentLoaded guard)
-var pyodideScript = 'window.__loadPyodide=async function(){if(window.__pyodideInstance)return window.__pyodideInstance;window.__pyodideInstance=await window.loadPyodide();return window.__pyodideInstance};'
-var runHandler = 'window.__runPyDemo=async function(b){var c=b.closest(".py-demo");if(!c||b.classList.contains("running"))return;var o=c.querySelector(".py-demo-output"),p=c.querySelector("pre code"),s=p?p.textContent:"";b.classList.add("running");b.textContent="Running...";o.textContent="Loading...";o.classList.remove("error");try{var py=await window.__loadPyodide();o.textContent="Running...";var r=await py.runPythonAsync(s);o.textContent=r||"(no output)"}catch(e){o.textContent="Error: "+e.message;o.classList.add("error")}finally{b.classList.remove("running");b.textContent="Run"}}'
+var pyodideLoader = 'window.__loadPyodide=async function(){if(window.__pyodideInstance)return window.__pyodideInstance;window.__pyodideInstance=await window.loadPyodide();return window.__pyodideInstance};'
+var runDemo = 'window.__runPyDemo=async function(b){var c=b.closest(".py-demo");if(!c||b.classList.contains("running"))return;var o=c.querySelector(".py-demo-output"),p=c.querySelector("pre code"),s=p?p.textContent:"";b.classList.add("running");b.textContent="Running...";o.textContent="Loading...";o.classList.remove("error");try{var py=await window.__loadPyodide();o.textContent="Running...";var r=await py.runPythonAsync(s);o.textContent=r||"(no output)"}catch(e){o.textContent="Error: "+e.message;o.classList.add("error")}finally{b.classList.remove("running");b.textContent="Run"}}'
+var eventBinder = 'document.addEventListener("click",function(e){var b=e.target.closest(".py-demo-run");if(b&&window.__runPyDemo)window.__runPyDemo(b)})'
 
 module.exports = {
   title: 'learn-python',
@@ -49,7 +44,8 @@ module.exports = {
   },
   head: [
     ['script', { src: 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js', defer: true }],
-    ['script', { text: pyodideScript + runHandler }]
+    ['script', { text: pyodideLoader + runDemo }],
+    ['script', { text: eventBinder }]
   ],
   themeConfig: {
     nav: [
