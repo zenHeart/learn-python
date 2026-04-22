@@ -29,11 +29,6 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
 }
 
-// Dev: CDN; Prod: local files
-var pyodideBase = isDev 
-  ? 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/' 
-  : '/learn-python/pyodide/'
-
 module.exports = {
   title: 'learn-python',
   description: 'Python 交互式学习站 — 边学边练，掌握 Agent 开发能力',
@@ -44,8 +39,7 @@ module.exports = {
     }
   },
   head: [
-    ['script', { src: pyodideBase + 'pyodide.js', defer: true }],
-    ['script', { src: pyodideBase + 'pyodide-init.js' }]
+    // Pyodide is loaded via theme/index.js to ensure it runs client-side only
   ],
   themeConfig: {
     nav: [
