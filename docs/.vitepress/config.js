@@ -29,8 +29,10 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
 }
 
-// Use local Pyodide files from /learn-python/pyodide/ (works on GitHub Pages)
-var pyodideBase = '/learn-python/pyodide/'
+// Dev: CDN (faster iteration); Prod: local files under base path
+var pyodideBase = isDev 
+  ? 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/' 
+  : '/learn-python/pyodide/'
 
 module.exports = {
   title: 'learn-python',
