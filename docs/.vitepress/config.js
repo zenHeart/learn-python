@@ -35,7 +35,7 @@ function escapeHtml(str) {
 
 module.exports = {
   title: 'learn-python',
-  description: 'Python Interactive Learning',
+  description: 'Python 交互式学习站 — 边学边练，掌握 Agent 开发能力',
   base: isDev ? '/' : '/learn-python/',
   markdown: {
     config: function(md) {
@@ -44,21 +44,30 @@ module.exports = {
   },
   themeConfig: {
     nav: [
-      { text: 'Home', link: '/' },
-      { text: 'Quick Start', link: '/tutorial/begin' }
+      { text: '首页', link: '/' },
+      { text: '学习进度', link: '/progress' },
+      { text: '快速入门', link: '/tutorial/begin' }
     ],
     sidebar: [
       {
-        text: 'Quick Start',
+        text: '首页',
+        link: '/'
+      },
+      {
+        text: '学习进度',
+        link: '/progress'
+      },
+      {
+        text: '快速入门',
         link: '/tutorial/begin'
       },
       {
-        text: 'Basics',
+        text: '语言基础',
         children: [
-          { text: 'Types', link: '/tutorial/types' },
-          { text: 'Statements', link: '/tutorial/statement' },
-          { text: 'Functions', link: '/tutorial/function' },
-          { text: 'Classes', link: '/tutorial/class' }
+          { text: '数据类型', link: '/tutorial/types' },
+          { text: '语句', link: '/tutorial/statement' },
+          { text: '函数', link: '/tutorial/function' },
+          { text: '类', link: '/tutorial/class' }
         ]
       }
     ]
