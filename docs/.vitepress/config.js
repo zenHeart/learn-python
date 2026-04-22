@@ -34,9 +34,6 @@ var pyodideBase = isDev
   ? 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/' 
   : '/learn-python/pyodide/'
 
-// Note: public files are at root, not under base
-var pyodideInit = isDev ? '/pyodide-init.js' : '/learn-python/pyodide-init.js'
-
 module.exports = {
   title: 'learn-python',
   description: 'Python 交互式学习站 — 边学边练，掌握 Agent 开发能力',
@@ -48,7 +45,7 @@ module.exports = {
   },
   head: [
     ['script', { src: pyodideBase + 'pyodide.js', defer: true }],
-    ['script', { src: pyodideInit }]
+    ['script', { src: pyodideBase + 'pyodide-init.js' }]
   ],
   themeConfig: {
     nav: [
