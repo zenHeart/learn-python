@@ -1,0 +1,55 @@
+/* Pyodide Interactive Code Blocks */
+
+.py-demo {
+  position: relative;
+  margin: 1.5rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg);
+}
+
+.py-demo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: var(--vp-c-bg-alt);
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+
+.py-demo-run {
+  padding: 0.3rem 0.8rem;
+  border: 1px solid var(--vp-c-brand);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--vp-c-brand);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.py-demo-run:hover {
+  background: var(--vp-c-brand);
+  color: white;
+}
+
+.py-demo-run.running {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.py-demo-output {
+  padding: 1rem;
+  background: var(--vp-c-bg);
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  min-height: 40px;
+  white-space: pre-wrap;
+  color: var(--vp-c-text-1);
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+.py-demo-output.error {
+  color: var(--vp-c-red);
+}
