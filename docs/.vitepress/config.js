@@ -36,7 +36,6 @@ module.exports = {
   title: 'learn-python',
   description: 'Python 交互式学习站 — 边学边练，掌握 Agent 开发能力',
   base: isDev ? '/' : '/learn-python/',
-  ignoreDeadLinks: true,
   markdown: {
     config: function(md) {
       md.use(createPyodidePlugin)

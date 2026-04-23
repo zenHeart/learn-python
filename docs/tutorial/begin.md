@@ -135,8 +135,4 @@ print(data[0][0].shape if hasattr(data[0][0], 'shape') else len(data))
 
 > ⚠️ 本教程使用 Pyodide（浏览器端 Python），不包含 TensorFlow。如需运行真正的 MNIST 示例，请在本地 `pip install tensorflow` 后执行。
 
----
-
-## 下节预告
-
-→ [L2 数据类型](/tutorial/types)
+> ⚠️ L2 数据类型 — 敬请期待
