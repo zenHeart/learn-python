@@ -1,7 +1,7 @@
 // This file only runs in the browser (VitePress client-side)
 // Load Pyodide and register the run button handler
 
-// Load Pyodide
+// Load Pyodide from CDN
 var script = document.createElement('script')
 script.src = 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js'
 script.defer = true
@@ -28,8 +28,19 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
       var py = await window.__loadPyodide()
       outputEl.textContent = 'Running...'
-      var result = await py.runPythonAsync(safeCode)
-      outputEl.textContent = result || '(no output)'
+
+      // Capture stdout so print() output is captured
+      var lines = []
+      py.setStdout({
+        batched: function(line) {
+          lines.push(line)
+        }
+      })
+
+      await py.runPythonAsync(safeCode)
+
+      var output = lines.join('\n')
+      outputEl.textContent = output || '(no output)'
     } catch (e) {
       outputEl.textContent = 'Error: ' + e.message
       outputEl.classList.add('error')

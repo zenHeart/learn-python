@@ -33,20 +33,31 @@ if (inBrowser) {
           p = c.querySelector('pre code'),
           s = p ? p.textContent : ''
       b.classList.add('running')
-      b.textContent = 'Running...'
+      b.textContent = '⏳ Running...'
       o.textContent = 'Loading...'
       o.classList.remove('error')
       try {
         var py = await window.__loadPyodide()
         o.textContent = 'Running...'
-        var r = await py.runPythonAsync(s)
-        o.textContent = r || '(no output)'
+
+        // Capture stdout so print() output is captured
+        var lines = []
+        py.setStdout({
+          batched: function(line) {
+            lines.push(line)
+          }
+        })
+
+        await py.runPythonAsync(s)
+
+        var output = lines.join('\n')
+        o.textContent = output || '(no output)'
       } catch(e) {
         o.textContent = 'Error: ' + e.message
         o.classList.add('error')
       } finally {
         b.classList.remove('running')
-        b.textContent = 'Run'
+        b.textContent = '▶ Run'
       }
     }
 
