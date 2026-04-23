@@ -55,7 +55,8 @@ module.exports = {
         text: '📖 教程',
         items: [
           { text: 'L1 Hello Python', link: '/tutorial/begin' },
-          { text: '🔖 标注规范', link: '/tutorial/annotation' }
+          { text: '🔖 标注规范', link: '/tutorial/annotation' },
+          { text: '❓ 知识盲点', link: '/tutorial/gaps' }
         ]
       }
     ]
