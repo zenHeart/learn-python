@@ -48,6 +48,14 @@ module.exports = {
     nav: [
       { text: '首页', link: '/' },
       { text: '学习进度', link: '/progress' }
+    ],
+    sidebar: [
+      {
+        text: '📖 教程',
+        items: [
+          { text: 'L1 Hello Python', link: '/tutorial/begin' }
+        ]
+      }
     ]
   }
 }
