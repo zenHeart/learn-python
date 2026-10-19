@@ -217,6 +217,75 @@ L2–L15 全部不存在（`begin.md` 末尾写「⚠️ L2 数据类型 — 敬
 
 ---
 
+## 第二轮走查补充发现
+
+第一轮漏掉了 `begin.md` 的两张表格（「Python 模块导入语法」、
+「对比 Python 内置数据类型」）和 `unpack.md` 第八节「应用场景」的三行。
+补齐时各写一条断言，又抓出两个问题。
+
+### D-16 教程自己的导入表示例跑不通
+
+**现象**：`begin.md` 导入语法表第四行写 `from mnist.data import a, b`。
+实测（`cd examples` 后）：
+
+```
+ImportError: cannot import name 'a' from 'mnist.data'
+```
+
+`mnist.data` 实际只导出 `load_data`：
+
+```bash
+cd examples
+python -c "import mnist.data as d; print([n for n in dir(d) if not n.startswith('_')])"
+# ['load_data']
+```
+
+**根因**：表格把「通用语法形式」写成了「对着 mnist 能跑的代码」，
+学习者照抄就报错。
+
+**修复**：表格里注明前四行是通用形式、不是都能对 `mnist` 跑通，
+并给出上面那条可自行验证的命令。
+
+**验证**：`.walkthrough/evidence/concepts-round2-audit.py` 形式4 反例断言
+确认这行确实抛 `ImportError`。
+
+---
+
+### D-17 星号解包的结果类型教程没说，容易搞错
+
+**现象**：`unpack.md` 第六节只说 `middle = [2, 3, 4]`，没说这个列表
+是**必然**的。我原以为 `rest` 的类型会跟着右侧容器走。
+
+**证据**：右侧分别是元组、字符串、range 时，星号目标收集到的都仍是 `list`：
+
+```
+列表     a=1   rest=[2, 3, 4]   type(rest)=list
+元组     a=1   rest=[2, 3, 4]   type(rest)=list
+字符串    a='a' rest=['b','c','d'] type(rest)=list
+range   a=0   rest=[1, 2, 3]   type(rest)=list
+```
+
+**修复**：在第六节补一段说明「星号目标收集到的永远是 list」，
+并补上 `a, *b, c = [1]` 的 `ValueError` 边界情况。
+
+---
+
+### D-18 数据类型表只说结论、不给验证手段
+
+**现象**：`begin.md`「对比 Python 内置数据类型」是一张四行表，
+写「元组（不可变）」「列表（可变）」「集合 无序、去重」，
+但没有任何可运行代码，学习者只能选择信或不信。
+
+**修复**：表后补一段可运行代码，把四条性质各自演示一遍
+（元组改元素抛 `TypeError`、列表可改可加、集合去重且不可下标、
+字典按键取值可增键），并补一条「空 `{}` 是 dict 不是 set」。
+
+**验证**：浏览器实测该块输出
+`列表 -> [99, 2, 3]` / `集合长度 -> 3 元素 -> {1, 2, 3}` / `字典 -> {'x': 1, 'y': 2}`。
+
+
+---
+
 ## 仓库卫生（记录，未改）
 
 | 项 | 实测 | 说明 |

@@ -171,6 +171,19 @@ first, *middle, last = [1, 2, 3, 4, 5]
 # first = 1, middle = [2, 3, 4], last = 5
 ```
 
+> ⚠️ **星号目标收集到的永远是 `list`**，不跟着右侧容器类型走。
+> 这一点很容易搞错——右侧是元组时，`rest` 仍然是列表：
+>
+> ```python
+> a, *rest = (1, 2, 3, 4)      # rest == [2, 3, 4]，类型 list，不是 tuple
+> a, *rest = "abcd"            # rest == ['b', 'c', 'd']
+> a, *rest = range(4)          # rest == [1, 2, 3]
+> ```
+>
+> 另外星号两侧至少要各有一个非星号目标，否则收集不到东西：
+> `a, *b, c = [1]` 会报
+> `ValueError: not enough values to unpack (expected at least 2, got 1)`。
+
 ### 嵌套中用星号
 
 ```python

@@ -71,6 +71,16 @@ if [ "$rc" -ne 0 ]; then
   exit "$rc"
 fi
 
+# ------------------------- begin.md 导入语法 / 数据类型 / unpack 应用场景
+# 第二轮走查补齐：这三张表第一轮漏掉了。
+$PY "$EV/concepts-round2-audit.py" > "$EV/concepts-round2-audit.md" 2>&1
+rc=$?
+echo "-> concepts-round2-audit.md (exit=$rc)"
+if [ "$rc" -ne 0 ]; then
+  echo "!! 第二轮概念断言门禁失败，查看 $EV/concepts-round2-audit.md" >&2
+  exit "$rc"
+fi
+
 echo
 echo "全部命令行证据已重新生成。浏览器/Pyodide 证据需按 "
 echo "evidence/browser-podide-runs.md 的步骤用 Playwright 复跑。"

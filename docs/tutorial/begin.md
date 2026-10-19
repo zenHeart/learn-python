@@ -178,11 +178,20 @@ print("test_images  =", test_images, "| test_labels  =", test_labels)
 
 | 场景 | 语法 | 示例 |
 |------|------|------|
-| 导入模块 | `import 模块名` | `import mnist` |
+| 导入模块 | `import 模块名` | `import mnist`（之后写 `mnist.data.load_data()`） |
 | 从模块导入函数 | `from 模块 import 函数` | `from mnist.data import load_data` |
 | 导入并改名 | `from 模块 import 函数 as 别名` | `from mnist.data import load_data as ld` |
-| 导入多个 | `from 模块 import a, b` | `from mnist.data import a, b` |
-| 相对导入（包内） | `from . import sibling` | `from . import data` |
+| 导入多个 | `from 模块 import a, b` | 需模块里真有 `a` 和 `b`；`mnist.data` 只导出了 `load_data`，所以对它写这行会报 `ImportError: cannot import name 'a'` |
+| 相对导入（包内） | `from . import sibling` | `from . import data`（只能在包内部的模块里用；在普通脚本里写会报 `ImportError: attempted relative import with no known parent package`） |
+
+> 前四行是**通用语法形式**，不是都能对着 `mnist` 包跑通的代码。
+> `mnist.data` 实际只导出 `load_data` 一个名字，可以在 `examples/` 下验证：
+>
+> ```bash
+> cd examples
+> python -c "import mnist.data as d; print([n for n in dir(d) if not n.startswith('_')])"
+> # ['load_data']
+> ```
 
 ---
 
@@ -194,6 +203,31 @@ print("test_images  =", test_images, "| test_labels  =", test_labels)
 | `[a, b]` | 列表（可变） | 随时可变的容器 |
 | `{a, b}` | 集合 | 无序、去重 |
 | `{'x': a}` | 字典 | 键值对 |
+
+四条性质都可以亲手验证：
+
+```python
+# 元组不可变：改元素会抛 TypeError: 'tuple' object does not support item assignment
+t = (1, 2)
+
+# 列表可变：能改元素也能追加
+lst = [1, 2]
+lst[0] = 99
+lst.append(3)
+print("列表 ->", lst)
+
+# 集合去重且无序：重复元素只剩一个，且不能用下标访问
+s = {1, 2, 2, 3, 3, 3}
+print("集合长度 ->", len(s), "元素 ->", s)
+
+# 字典按键取值、可增键
+d = {'x': 1}
+d['y'] = 2
+print("字典 ->", d)
+```
+
+> 容易混的一点：**空 `{}` 是字典，不是集合**。要空集合得写 `set()`。
+> 非空的 `{1, 2}` 才是集合。
 
 ---
 

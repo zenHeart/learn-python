@@ -111,7 +111,26 @@ ValueError: too many values to unpack (expected 2)
 
 ```bash
 python .walkthrough/evidence/unpack-claims-audit.py
+python .walkthrough/evidence/concepts-round2-audit.py
 ```
 
-退出码非 0 即有断言失败。这个脚本现在是回归门禁：谁把教程改回错误结论，
+退出码非 0 即有断言失败。这两个脚本现在是回归门禁：谁把教程改回错误结论，
 这里立刻 FAIL。
+
+---
+
+## 第二轮补齐：第八节「应用场景」5 行
+
+第一轮只验证了 `divmod` 和交换变量两行，剩下三行漏掉了。补齐后 5 行全 PASS：
+
+| 场景 | 代码 | 实测 |
+|------|------|------|
+| 函数返回多个值 | `x, y = divmod(10, 3)` | `x=3, y=1` |
+| 循环解包 | `for k, v in d.items()` | 依次得到 `('a',1)`、`('b',2)` |
+| 交换变量 | `a, b = b, a` | `1,2` → `2,1` |
+| 解析配置 | `host, port, *rest = args` | `('localhost','8080',['extra1','extra2'])` |
+| 数据处理 | `(train, val), test = split_data(data)` | `(([1,2],[3,4]),[5,6])` |
+
+**我原来理解错的地方**：`host, port, *rest` 我以为 `rest` 是元组，
+实测是**列表**。星号收集的结果类型由 Python 决定（列表），
+不是跟着右侧容器类型走。这一点教程没写，值得补。

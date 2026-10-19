@@ -8,7 +8,7 @@
     "docs:serve": "vitepress serve docs",
     "check:links": "npm run docs:build && node .walkthrough/check-links.js",
     "check:examples": "bash .walkthrough/run-all.sh",
-    "check:unpack": "python .walkthrough/evidence/unpack-claims-audit.py",
+    "check:unpack": "python .walkthrough/evidence/unpack-claims-audit.py && python .walkthrough/evidence/concepts-round2-audit.py",
     "check": "npm run check:links && npm run check:examples && npm run check:unpack"
   },
   "dependencies": {

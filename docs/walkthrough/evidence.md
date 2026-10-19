@@ -97,12 +97,15 @@ npm run docs:dev        # ➜ Local: http://localhost:5173/
 |------|-------|------|---------------------|-----------|
 | `/` | 1 | 1 | 0 | 0 |
 | `/progress` | 1 | 1 | 0 | 0 |
-| `/tutorial/begin`（L1） | 8 | 8 | 0 | 0 |
+| `/tutorial/begin`（L1） | 9 | 9 | 0 | 0 |
 | `/tutorial/annotation` | 0 | — | — | 0 |
 | `/tutorial/gaps` | 0 | — | — | 0 |
 | `/tutorial/unpack` | 10 | 8 | 2 | 0 |
-| `/walkthrough/*`（8 页） | 11 | 11 | 0 | 0 |
-| **合计** | **30** | **27** | **3** | **0** |
+| `/walkthrough/*`（8 页） | 12 | 11 | 0 | 0 |
+| **合计** | **33** | **30** | **3** | **0** |
+
+> `/walkthrough/*` 那 12 块里有 1 块是走查笔记自己写错的片段（依赖不存在的
+> `demopkg` 包），第二轮自查时改成 `text`，所以正常数是 11 不是 12。
 
 > 修复前原有 6 个页面是 **27 个块中 11 个非预期报错**。
 
@@ -136,10 +139,14 @@ npm run docs:dev        # ➜ Local: http://localhost:5173/
 
 | 门禁 | 命令 | 当前结果 |
 |------|------|---------|
-| 文档构建 | `npm run docs:build` | ✅ 通过 |
-| 链接（含 frontmatter） | `node .walkthrough/check-links.js` | ✅ 通过（已做反向验证） |
+| 文档构建 | `npm run docs:build` | ✅ 通过（14 页） |
+| 链接（含 frontmatter） | `node .walkthrough/check-links.js` | ✅ 通过（14 md / 28 链接，含反向验证） |
 | 拆包断言 | `python .walkthrough/evidence/unpack-claims-audit.py` | ✅ 22 PASS / 0 FAIL |
+| 概念断言（第二轮：导入 / 数据类型 / 应用场景） | `python .walkthrough/evidence/concepts-round2-audit.py` | ✅ 22 PASS / 0 FAIL |
 | examples 运行 | `bash .walkthrough/run-all.sh` | ✅ 61 通过 / 6 需交互或特定调用方式 |
+| 浏览器交互块 | Playwright 逐块点击 | ✅ 33 块，0 非预期报错 |
 
-> 仓库**没有** pytest / 单元测试，`package.json` 只有 `docs:dev` /
-> `docs:build` / `docs:serve` 三个脚本。上表后两项是本次走查新增的门禁。
+> 仓库**没有** pytest / 单元测试，`package.json` 原有脚本只有
+> `docs:dev` / `docs:build` / `docs:serve`。上表后四项是本次走查新增的门禁，
+> 已接进 `npm run check`。
+
