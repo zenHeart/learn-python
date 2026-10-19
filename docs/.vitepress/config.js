@@ -12,9 +12,9 @@ function createPyodidePlugin(md) {
     if (lang === 'python' || lang === 'py') {
       var code = token.content
       return '<div class="py-demo">' +
-        '<div class="py-demo-header"><span>Python</span><button class="py-demo-run" type="button">Run</button></div>' +
+        '<div class="py-demo-header"><span>Python</span><button class="py-demo-run" type="button">▶ 运行</button></div>' +
         '<pre class="language-python"><code>' + escapeHtml(code) + '</code></pre>' +
-        '<div class="py-demo-output">Click Run to see output</div>' +
+        '<div class="py-demo-output">点击「▶ 运行」查看输出</div>' +
         '</div>'
     }
 

@@ -33,12 +33,12 @@ if (inBrowser) {
           p = c.querySelector('pre code'),
           s = p ? p.textContent : ''
       b.classList.add('running')
-      b.textContent = '⏳ Running...'
-      o.textContent = 'Loading...'
+      b.textContent = '⏳ 运行中…'
+      o.textContent = '加载中…'
       o.classList.remove('error')
       try {
         var py = await window.__loadPyodide()
-        o.textContent = 'Running...'
+        o.textContent = '运行中…'
 
         // Capture stdout so print() output is captured
         var lines = []
@@ -51,13 +51,13 @@ if (inBrowser) {
         await py.runPythonAsync(s)
 
         var output = lines.join('\n')
-        o.textContent = output || '(no output)'
+        o.textContent = output || '(无输出)'
       } catch(e) {
-        o.textContent = 'Error: ' + e.message
+        o.textContent = '错误: ' + e.message
         o.classList.add('error')
       } finally {
         b.classList.remove('running')
-        b.textContent = '▶ Run'
+        b.textContent = '▶ 运行'
       }
     }
 
