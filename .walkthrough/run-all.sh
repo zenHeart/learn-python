@@ -24,17 +24,21 @@ echo "== cwd:    $ROOT =="
 
 # ---------------------------------------------------------------- examples
 # 逐个运行 examples/ 下所有 .py，记录命令与原始输出。
+# stdin 重定向自 /dev/null：examples/ 里有 6 个文件调用 input()，
+# 不关掉 stdin 脚本会卡在等待输入上。关掉后它们以 EOFError 结束，
+# 这是"需要交互输入"的固有属性，在证据里如实记录。
 {
   echo "########## RUN MANIFEST ##########"
   echo "date: $(date -Iseconds)"
   echo "python: $($PY --version 2>&1)"
   echo "cwd: $ROOT"
+  echo "note: stdin 来自 /dev/null，调用 input() 的示例会以 EOFError 结束"
   echo
   for f in $(find examples -name '*.py' | sort); do
     echo "================================================================"
     echo "### FILE: $f"
-    echo "### CMD: python \"$f\""
-    out=$($PY "$f" 2>&1); rc=$?
+    echo "### CMD: python \"$f\" < /dev/null"
+    out=$($PY "$f" </dev/null 2>&1); rc=$?
     echo "--- stdout/stderr (exit=$rc) ---"
     echo "$out"
   done
