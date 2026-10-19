@@ -11,7 +11,7 @@ hero:
       link: /tutorial/begin
     - theme: alt
       text: 查看学习路径
-      link: /tutorial/types
+      link: /progress
 
 features:
   - icon: 🐍
