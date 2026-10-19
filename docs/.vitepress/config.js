@@ -47,7 +47,8 @@ module.exports = {
   themeConfig: {
     nav: [
       { text: '首页', link: '/' },
-      { text: '学习进度', link: '/progress' }
+      { text: '学习进度', link: '/progress' },
+      { text: '🔍 学习走查', link: '/walkthrough/' }
     ],
     sidebar: [
       {
@@ -57,6 +58,20 @@ module.exports = {
           { text: '🔖 标注规范', link: '/tutorial/annotation' },
           { text: '❓ 知识盲点', link: '/tutorial/gaps' },
           { text: '📐 拆包语法完全指南', link: '/tutorial/unpack' }
+        ]
+      },
+      {
+        text: '🔍 学习走查',
+        collapsed: false,
+        items: [
+          { text: '总览', link: '/walkthrough/' },
+          { text: '覆盖总账', link: '/walkthrough/coverage' },
+          { text: 'L1 走查笔记', link: '/walkthrough/l1' },
+          { text: '拆包断言核对', link: '/walkthrough/unpack' },
+          { text: '练习证据', link: '/walkthrough/evidence' },
+          { text: '发现的问题', link: '/walkthrough/defects' },
+          { text: 'careers 对齐', link: '/walkthrough/careers' },
+          { text: '未解决与恢复点', link: '/walkthrough/open' }
         ]
       }
     ]
