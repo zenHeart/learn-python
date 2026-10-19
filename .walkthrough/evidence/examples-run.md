@@ -1,5 +1,5 @@
 ########## RUN MANIFEST ##########
-date: 2026-10-20T01:21:04+08:00
+date: 2026-10-20T01:35:43+08:00
 python: Python 3.11.9
 cwd: /c/Users/cheng/code/github/.worktrees/learn-python-stepfun-20261020
 note: stdin 来自 /dev/null，调用 input() 的示例会以 EOFError 结束
@@ -86,8 +86,8 @@ change comment
 say
 hi1 say
 ('tom',)
-<code object say at 0x000001E522F60A80, file "C:\Users\cheng\code\github\.worktrees\learn-python-stepfun-20261020\examples\_draft\42-function-attributes.py", line 16>
-{'__name__': '__main__', '__doc__': None, '__package__': None, '__loader__': <_frozen_importlib_external.SourceFileLoader object at 0x000001E522FDAC90>, '__spec__': None, '__annotations__': {}, '__builtins__': <module 'builtins' (built-in)>, '__file__': 'C:\\Users\\cheng\\code\\github\\.worktrees\\learn-python-stepfun-20261020\\examples\\_draft\\42-function-attributes.py', '__cached__': None, 'hi': <function hi at 0x000001E5232F93A0>, 'say': <function say at 0x000001E5232F94E0>}
+<code object say at 0x000001F2E15C0A80, file "C:\Users\cheng\code\github\.worktrees\learn-python-stepfun-20261020\examples\_draft\42-function-attributes.py", line 16>
+{'__name__': '__main__', '__doc__': None, '__package__': None, '__loader__': <_frozen_importlib_external.SourceFileLoader object at 0x000001F2E163B010>, '__spec__': None, '__annotations__': {}, '__builtins__': <module 'builtins' (built-in)>, '__file__': 'C:\\Users\\cheng\\code\\github\\.worktrees\\learn-python-stepfun-20261020\\examples\\_draft\\42-function-attributes.py', '__cached__': None, 'hi': <function hi at 0x000001F2E1A5D3A0>, 'say': <function say at 0x000001F2E1A5D4E0>}
 {'a': {'a': 1}}
 None
 {}
