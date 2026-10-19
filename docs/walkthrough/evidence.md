@@ -65,9 +65,9 @@ train_labels 类型: list
 
 ### 修掉的真实缺陷：`examples/statement/for-else.py`
 
-原文件只有三行且不完整：
+原文件只有三行且不完整（本身就是语法错误，所以用 `text` 标注）：
 
-```python
+```text
 try:
   a+b
 except
@@ -91,19 +91,20 @@ npm run docs:dev        # ➜ Local: http://localhost:5173/
 驱动：Playwright 逐个点击 `.py-demo-run`，等待按钮脱离 `running` 类后
 读取 `.py-demo-output` 文本。
 
-### 汇总
+### 汇总（修复后复跑，覆盖全部 14 个页面）
 
 | 页面 | 交互块 | 正常 | 教程主动标注的错误演示 | 非预期报错 |
 |------|-------|------|---------------------|-----------|
 | `/` | 1 | 1 | 0 | 0 |
 | `/progress` | 1 | 1 | 0 | 0 |
-| `/tutorial/begin`（L1） | 8 | 8 | 0 | **0** |
-| `/tutorial/annotation` | 0 | — | — | **0** |
-| `/tutorial/gaps` | 0 | — | — | **0** |
-| `/tutorial/unpack` | 10 | 8 | 2 | **0** |
-| **合计** | **20** | **18** | **2** | **0** |
+| `/tutorial/begin`（L1） | 8 | 8 | 0 | 0 |
+| `/tutorial/annotation` | 0 | — | — | 0 |
+| `/tutorial/gaps` | 0 | — | — | 0 |
+| `/tutorial/unpack` | 10 | 8 | 2 | 0 |
+| `/walkthrough/*`（8 页） | 11 | 11 | 0 | 0 |
+| **合计** | **30** | **27** | **3** | **0** |
 
-> 修复前是 **27 个块中 11 个非预期报错**。
+> 修复前原有 6 个页面是 **27 个块中 11 个非预期报错**。
 
 ### L1 逐块输出（修复后）
 
