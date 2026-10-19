@@ -33,13 +33,19 @@
 
 ### 1. 代码中标注
 
-```python
+标注符号 `❓` / `⚠️` 不是 Python 语法，所以下面这类片段用 `text` 标注，
+不会被交互引擎当代码执行：
+
+```text
 # 标注 + 分类
 ❓[语法] from tensorflow.keras.datasets import mnist
 ❓[语法] (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
 ❓[概念] 什么是张量（Tensor）
 ❓[库] tf.keras.datasets 是用来做什么的
 ```
+
+要真的运行一段代码时，先把标注删掉、写成合法 Python，并且只用 Pyodide
+支持的库（浏览器端没有 `tensorflow` / `numpy`）。
 
 ### 2. 复习笔记模板
 
@@ -97,7 +103,7 @@
 
 ### 代码中的标注
 
-```python
+```text
 # L1 代码示例
 print("hello")  # ✅ 理解
 

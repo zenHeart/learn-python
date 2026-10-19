@@ -51,7 +51,7 @@ if (inBrowser) {
         await py.runPythonAsync(s)
 
         var output = lines.join('\n')
-        o.textContent = output || '(无输出)'
+        o.textContent = output || '(运行完成，但没有 print 输出——这段代码只做赋值)'
       } catch(e) {
         o.textContent = '错误: ' + e.message
         o.classList.add('error')
