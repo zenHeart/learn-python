@@ -56,6 +56,8 @@
 | O-08 | 站点没有 pytest / 单元测试，`package.json` 只有 3 个 docs 脚本 | 本次新增了两个门禁（`check-links.js`、`unpack-claims-audit.py`）但没接进 `package.json` scripts，也没接 CI。接入需确认是否允许改 CI |
 | O-09 | `examples/` 下 66 个文件与课程零关联 | 要么补教程引用，要么明确它们是素材库。属内容规划决策 |
 | O-10 | careers 三份文件对 Python 自评不一致（未学/了解/弱） | careers 是只读的外部目录，本次不得修改，只记录观察 |
+| O-11 | README 的 13 条外部学习路径在 `docs/` 里零引用 | 走查者从站内页面无法知道它们存在，也没有「学 L1 前要不要先看官方 tutorial」的说明。README 的自报进度与 `progress.md` 的课表是两套独立口径。属于内容规划决策，未改 |
+| O-12 | `progress.md` 课表与 README 学习路径口径不一致 | 同上，需维护者统一 |
 
 ## 门禁状态
 
