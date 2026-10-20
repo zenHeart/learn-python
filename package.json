@@ -9,7 +9,8 @@
     "check:links": "npm run docs:build && node .walkthrough/check-links.js",
     "check:examples": "bash .walkthrough/run-all.sh",
     "check:unpack": "python .walkthrough/evidence/unpack-claims-audit.py && python .walkthrough/evidence/concepts-round2-audit.py",
-    "check": "npm run check:links && npm run check:examples && npm run check:unpack"
+    "check:examples-claims": "python .walkthrough/evidence/examples-claims-audit.py",
+    "check": "npm run check:links && npm run check:examples && npm run check:unpack && npm run check:examples-claims"
   },
   "dependencies": {
     "vitepress": "^1.5.0"

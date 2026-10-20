@@ -212,3 +212,5 @@ if failed:
     for _, label, claim, got in failed:
         print(f"    - {label}")
         print(f"        声称 {claim!r} / 实际 {got!r}")
+    # 门禁必须能失败：原来只打印 FAIL 却始终 exit 0，run-all.sh 的 rc 判断是死代码。
+    sys.exit(1)

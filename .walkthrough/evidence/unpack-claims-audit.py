@@ -2,6 +2,8 @@
 # 学习者方法：把教程里每一条"结果 = xxx"的断言写成可执行断言，
 # 用 Python 自己判定 TRUE / FALSE，不靠我读代码的印象。
 
+import sys
+
 results = []
 
 def check(label, claim, got):
@@ -165,3 +167,6 @@ if failed:
     for _, label, claim, got in failed:
         print(f"    - {label}")
         print(f"        声称 {claim!r} / 实际 {got!r}")
+    # 门禁必须能失败：原来只打印 FAIL 却始终 exit 0，
+    # run-all.sh 里的 rc 判断是死代码，教程改错了也照常通过。
+    sys.exit(1)

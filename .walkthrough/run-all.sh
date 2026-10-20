@@ -81,6 +81,17 @@ if [ "$rc" -ne 0 ]; then
   exit "$rc"
 fi
 
+# ------------------------------------- examples/ 全部 66 个示例的注释结论
+# 第三轮走查：examples/ 与课程零关联，前两轮只证明了「能跑」，
+# 没证明注释里写的结果是对的。这里把每条结论写成断言。
+$PY "$EV/examples-claims-audit.py" > "$EV/examples-claims-audit.md" 2>&1
+rc=$?
+echo "-> examples-claims-audit.md (exit=$rc)"
+if [ "$rc" -ne 0 ]; then
+  echo "!! examples 断言门禁失败，查看 $EV/examples-claims-audit.md" >&2
+  exit "$rc"
+fi
+
 echo
 echo "全部命令行证据已重新生成。浏览器/Pyodide 证据需按 "
 echo "evidence/browser-podide-runs.md 的步骤用 Playwright 复跑。"
