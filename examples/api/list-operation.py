@@ -1,5 +1,5 @@
-list = [1, 2, 3, 4]
-print('list:', list)
+items = [1, 2, 3, 4]
+print('list:', items)
 # 末尾添加元素
-list.append(len(list) + 1)
-print('list.append(len(list)+1):', list)
+items.append(len(items) + 1)
+print('list.append(len(list)+1):', items)

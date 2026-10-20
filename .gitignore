@@ -5,5 +5,10 @@ todo.md
 tempCodeRunnerFile.py
 __pycache__
 dist
+# 注意：带斜杠的模式锚定仓库根。站点在 docs/ 下，所以 .vitepress/cache
+# 匹配不到 docs/.vitepress/cache——缓存文件因此被提交且每次构建都弄脏工作区。
+# 两种写法都留：根级（历史） + docs/ 下（实际生效）。
 .vitepress/cache
+docs/.vitepress/cache/
+docs/.vitepress/dist/
 .playwright-mcp/

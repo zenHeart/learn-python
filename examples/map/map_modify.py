@@ -1,6 +1,6 @@
-# 采用方括号初始化列表
-map = {'name': 'tom', 'age': 12}
+# 采用花括号初始化字典
+profile = {'name': 'tom', 'age': 12}
 
-# 直接索引修改元祖数值
-map['age'] = 20
-print("map:", map)
+# 直接按键修改字典的值
+profile['age'] = 20
+print("map:", profile)

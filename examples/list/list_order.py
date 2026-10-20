@@ -1,14 +1,15 @@
 # 元素排序
-list = ['A', 'tom', 'jerry', 'jack', '1']
-list.sort()
-# 字典排序,注意 list 必须为同一类型否则会报错
-print('list.sort():', list)
+items = ['A', 'tom', 'jerry', 'jack', '1']
+items.sort()
+# 按字符编码（码位）排序：数字 < 大写 < 小写。元素必须可互相比较，
+# 混类型会抛 TypeError: '<' not supported between instances of 'str' and 'int'
+print('list.sort():', items)
 
-# sorted 不该边原始排序
-list = ['A', 'tom', 'jerry', 'jack', '1']
-print('sorted(list):', sorted(list), "list:", list)
+# sorted() 不改变原列表，返回排好序的新列表
+items = ['A', 'tom', 'jerry', 'jack', '1']
+print('sorted(list):', sorted(items), "list:", items)
 
-# reverse 翻转 list 顺序
-list = ['A', 'tom', 'jerry', 'jack', '1']
-list.reverse()
-print('list.reverse():', list)
+# reverse 翻转 list 顺序（原地，返回 None）
+items = ['A', 'tom', 'jerry', 'jack', '1']
+items.reverse()
+print('list.reverse():', items)

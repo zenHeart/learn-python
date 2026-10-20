@@ -3,5 +3,5 @@ class C1:
    print("test")
    for i in range(1,10):
       print(i)
-   if __module__ == '__main__':
+   if __name__ == '__main__':
       print('main')      

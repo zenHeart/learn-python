@@ -1,18 +1,18 @@
 # 浮点数
-print(1.1 + 1.2) # 1.3
+print(1.1 + 1.2) # 2.3
 print(-0.23) # -0.23
 
 
 # 科学计数法 
-print(1e5) # 100000
+print(1e5) # 100000.0（科学计数法是 float，不是 int）
 print(1.1e-2) # 0.011
 print(1.22e3) # 1220.0
 
 # 复数运算
 print(1j + 1j) # 2j
 print(1j - 1j) # 0j
-print(1j * 1j) # -1 + 0j
-print(1j / 1j) # 1 + 0j
+print(1j * 1j) # (-1+0j)
+print(1j / 1j) # (1+0j)
 
 
 # 0b,0B 表示 二进制表示

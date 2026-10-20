@@ -23,9 +23,8 @@ say.__name__ =  'hi1'
 print(say.__name__, say.__qualname__)
 # __defaults__， tuple save function default values
 print(say.__defaults__)
-print(say.__code__)
+print(say.__code__.co_varnames)
 
-print(hi.__globals__)
 say.a = {'a' : 1}
 print(say.__dict__)
 print(say.__closure__)

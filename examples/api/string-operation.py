@@ -1,14 +1,14 @@
-str = "hello world"
+text = "hello world"
 
-print("str:", str)
+print("str:", text)
 # 大写首字母
-print("str.title():", str.title())
+print("str.title():", text.title())
 # 大写所有字符
-print("str.upper():", str.upper())
+print("str.upper():", text.upper())
 # 小写所有字符
-print("str.lower():", str.lower())
+print("str.lower():", text.lower())
 # 拼接字符
 print("'a''b':", 'a''b')
-print("'1' + str:", '1' + str)
+print("'1' + text:", '1' + text)
 # 删除前后的空白
-print("str.rstripe():", ('\t'+str+'\t').rstrip())
+print("str.rstrip():", ('\t'+text+'\t').rstrip())
