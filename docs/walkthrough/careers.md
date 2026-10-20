@@ -46,10 +46,10 @@
 | 课 | 计划内容 | 对应岗位要求 | 实际存在 | 我的状态 |
 |----|---------|-------------|---------|---------|
 | L1 | print / 变量 / 注释 / 拆包 | Python 工程能力（P0）的地基 | ✅ 已走查 | 已掌握（有证据） |
-| L2 | int / str / bool / list | Q3.1「读任务集、打分」要用 | ❌ | 未开始 |
-| L3 | if / for / while | Q3.1 脚本逻辑 | ❌ | 未开始 |
-| L4 | def / 参数 / 返回值 | Q3.1「写成可复用函数」 | ❌ | 未开始 |
-| L5 | class / 方法 / 继承 | Pydantic 模型、工具封装 | ❌ | 未开始 |
+| L2 | int / str / bool / list | Q3.1「读任务集、打分」要用 | ❌ 页面未写 | 素材已走查（[l2-types](/walkthrough/l2-types)） |
+| L3 | if / for / while | Q3.1 脚本逻辑 | ❌ 页面未写 | 素材已走查（[l3-flow](/walkthrough/l3-flow)） |
+| L4 | def / 参数 / 返回值 | Q3.1「写成可复用函数」 | ❌ 页面未写 | 素材已走查（[l4-function](/walkthrough/l4-function)） |
+| L5 | class / 方法 / 继承 | Pydantic 模型、工具封装 | ❌ 页面未写 | 素材已走查（[l5-class](/walkthrough/l5-class)） |
 | **L6** | **异步编程 asyncio** | **Q3.2 GIL / asyncio vs 多进程** | ❌ | **未开始，P0 关联** |
 | **L7** | **HTTP 与 API 调用（httpx）** | **LLM API 调用链路、Q3.1 并发调用模型** | ❌ | **未开始，P0 关联** |
 | L8 | 数据处理（Pydantic） | 结构化输出、工具入参校验 | ❌ | 未开始 |
@@ -100,5 +100,7 @@ VitePress 的死链检查盲区。主力是 TS，Python 能写这类工具链。
 4. **L9 Tool Use** —— 我已「做过」但简历里没有 Python 侧举证；
    用 Python 写一个最小 function calling 示例即可补齐。
 
-**当前卡点**：L2 不存在，所以上面第 1 步无法开始。见
+**当前卡点（第三轮后更新）**：L2–L5 的**素材**已经走查完并有证据，
+缺的是把它们写成课程页面。走查笔记可以直接当誊写输入，
+所以第 1 步从「无法开始」变成「有现成草稿」。见
 [未解决与恢复点](/walkthrough/open)。

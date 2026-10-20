@@ -15,6 +15,11 @@ description: 以初级前端工程师视角真实走查 learn-python 教程的�
 |------|------|
 | [覆盖总账](/walkthrough/coverage) | 课程真实存在多少内容、走了多少、卡在哪 |
 | [L1 走查笔记](/walkthrough/l1) | 逐个概念的理解证明：预测 → 运行 → 新例子 + 反例 |
+| [L2 数据类型](/walkthrough/l2-types) | 数字 / 字符串 / 列表 / 字典 / 推导式（24 个示例） |
+| [L3 控制流](/walkthrough/l3-flow) | for / while / if / break / continue / for-else / try（10 个示例） |
+| [L4 函数](/walkthrough/l4-function) | def / 默认参数 / 关键字实参 / *args / **kwargs（6 个示例） |
+| [L5 类](/walkthrough/l5-class) | self / 属性遮蔽 / 方法绑定 / 继承 / 类体（12 个示例） |
+| [examples 全量清单](/walkthrough/examples-audit) | 66 个示例的总账、跨文件反模式、剩余素材 |
 | [拆包断言核对](/walkthrough/unpack) | 把 `unpack.md` 的 22 条结论写成可执行断言 |
 | [练习证据](/walkthrough/evidence) | 每个练习的真实命令与输出，含复现方式 |
 | [发现的问题](/walkthrough/defects) | 走查中发现的缺陷、修复状态与证据 |
@@ -43,15 +48,26 @@ description: 以初级前端工程师视角真实走查 learn-python 教程的�
 原始证据在仓库 `.walkthrough/evidence/`，可用一条命令复现：
 
 ```bash
-bash .walkthrough/run-all.sh          # 命令行证据 + 断言门禁
+bash .walkthrough/run-all.sh          # 命令行证据 + 三个断言门禁
 node .walkthrough/check-links.js      # 链接门禁（需先 docs:build）
 ```
+
+三个断言门禁（教程改错就 FAIL，已做反向验证）：
+
+| 门禁 | 断言数 | 覆盖 |
+|------|--------|------|
+| `unpack-claims-audit.py` | 22 | `unpack.md` 全部结论 |
+| `concepts-round2-audit.py` | 22 | `begin.md` 导入语法表 / 数据类型表 / `unpack.md` 应用场景 |
+| `examples-claims-audit.py` | 256 | `examples/` 66 个文件注释里的每条结论 |
 
 浏览器/Pyodide 证据的复跑步骤记录在
 `.walkthrough/evidence/browser-podide-runs.md`。
 
 ## 当前状态
 
-**active** —— 已存在的 4 个教程页 + 1 个首页全部走完并有证据，
-但课程计划 15 课只写出了 1 课，剩余 14 课不存在，无法走查。
-详见 [覆盖总账](/walkthrough/coverage) 与 [未解决与恢复点](/walkthrough/open)。
+**active** —— 已存在的 6 个文档页 + 66 个示例全部走完并有证据
+（256 条断言 + 逐概念理解证明），但课程计划 15 课只写出了 1 课，
+L2–L15 的**页面**不存在，学习路径仍然断裂。
+第三轮把 L2–L5 的素材（`examples/` 下 52 个文件）按概念走完了，
+缺的是把它们写成课程页面。详见
+[覆盖总账](/walkthrough/coverage) 与 [未解决与恢复点](/walkthrough/open)。

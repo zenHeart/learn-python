@@ -13,9 +13,18 @@ node .walkthrough/check-links.js      # 链接门禁（需先 npm run docs:build
 浏览器/Pyodide 证据需按 `.walkthrough/evidence/browser-podide-runs.md`
 记录的步骤用 Playwright 复跑（需要 dev server + 浏览器）。
 
+> ⚠️ **本轮（第三轮）没有复跑浏览器证据**：Playwright MCP 服务本次会话连接失败
+> （`CONNECTION_CLOSED`），无法真实点击「▶ 运行」按钮。
+> 因此本轮新增的 5 个走查笔记页面里的 `python` 代码块，
+> **只在本地 CPython 3.11.9 下验证过**（与 Pyodide 0.24.1 的 Python 3.11 同版本），
+> 未在浏览器里实测。这不满足本笔记自己定的
+> 「浏览器/Pyodide 练习真实点击，不用静态检查冒充完成」标准，
+> 所以这 5 页的交互块状态标为 **未验证**，不冒充已通过。
+> 等 MCP 恢复后需按 `browser-podide-runs.md` 的步骤补跑。
+
 ---
 
-## 一、examples/ 全部 67 个文件
+## 一、examples/ 全部 66 个文件
 
 命令（`run-all.sh` 内部）：
 
@@ -27,22 +36,30 @@ for f in $(find examples -name '*.py' | sort); do python "$f" </dev/null; done
 
 | 状态 | 数量 |
 |------|------|
-| 直接运行通过 | 61 |
-| 需要交互 stdin | 5 |
+| 直接运行通过 | 58 |
+| 需要交互 stdin | 7 |
 | 需要正确的模块调用方式 | 1 |
-| 合计 | 67 |
+| 合计 | 66 |
 
-### 需要交互 stdin 的 5 个（已用管道送值验证通过，不是缺陷）
+> 「直接运行通过」从 61 降到 58、「需要交互 stdin」从 5 升到 7：
+> `statement/try.py` 和 `statement/finally.py` 原本用裸 `except:` 把 `EOFError`
+> 吞掉，所以在 `/dev/null` 下也显示 exit 0；改成正确的 `except ValueError:` 之后
+> EOF 正常逃出（D-26）。**数字变了，但更诚实。**
+
+### 需要交互 stdin 的 7 个（已用管道送值验证通过，不是缺陷）
 
 | 文件 | `echo 7 \| python <file>` 的输出 |
 |------|------------------------------|
 | `examples/statement/if.py` | `enter a number: `（7 是奇数故无第二行） |
 | `examples/statement/elif.py` | `enter a number: positive` |
 | `examples/statement/else.py` | `enter a number: a is odd number` |
-| `examples/function/def.py` | `enter a number:0 1 1 2 3 5 ` |
+| `examples/statement/try.py` | `Please enter a number: x is a valid number: 7` |
+| `examples/statement/finally.py` | `Please enter a number: x is a valid number: 7` / `over` |
+| `examples/function/def.py` | `enter a number:0 1 1 2 3 5 8 ` |
 | `examples/_draft/31-if.py` | `please enter a number: x is odd number` |
 
-自动化门禁里它们以 `EOFError` 结束，因为 stdin 接了 `/dev/null`。
+`try.py` 送 `abc` 时输出 `Please enter a number: Oops! That was not a valid number.`
+（`except ValueError` 生效，退出码 0）——反向确认窄捕获仍然工作。
 
 ### mnist 的调用方式
 
@@ -75,7 +92,7 @@ except
 
 `python examples/statement/for-else.py` 直接
 `SyntaxError: expected ':'`（`except` 缺异常类型与冒号，函数体为空）。
-已补成完整演示，修复后该文件运行通过。这是 67 个文件里唯一的语法错误。
+已补成完整演示，修复后该文件运行通过。这是全部示例文件里唯一的语法错误。
 
 ---
 
@@ -139,14 +156,30 @@ npm run docs:dev        # ➜ Local: http://localhost:5173/
 
 | 门禁 | 命令 | 当前结果 |
 |------|------|---------|
-| 文档构建 | `npm run docs:build` | ✅ 通过（14 页） |
-| 链接（含 frontmatter） | `node .walkthrough/check-links.js` | ✅ 通过（14 md / 28 链接，含反向验证） |
+| 文档构建 | `npm run docs:build` | ✅ 通过 |
+| 链接（含 frontmatter） | `node .walkthrough/check-links.js` | ✅ 通过（含反向验证） |
 | 拆包断言 | `python .walkthrough/evidence/unpack-claims-audit.py` | ✅ 22 PASS / 0 FAIL |
 | 概念断言（第二轮：导入 / 数据类型 / 应用场景） | `python .walkthrough/evidence/concepts-round2-audit.py` | ✅ 22 PASS / 0 FAIL |
-| examples 运行 | `bash .walkthrough/run-all.sh` | ✅ 61 通过 / 6 需交互或特定调用方式 |
-| 浏览器交互块 | Playwright 逐块点击 | ✅ 33 块，0 非预期报错 |
+| **examples 断言（第三轮：66 个文件的注释结论）** | `python .walkthrough/evidence/examples-claims-audit.py` | ✅ **256 PASS / 0 FAIL** |
+| examples 运行 | `bash .walkthrough/run-all.sh` | ✅ 58 通过 / 8 需交互或特定调用方式 |
+| 浏览器交互块 | Playwright 逐块点击 | ⚠️ 上轮 33 块 0 非预期报错；**本轮未复跑**（MCP 连接失败） |
 
 > 仓库**没有** pytest / 单元测试，`package.json` 原有脚本只有
-> `docs:dev` / `docs:build` / `docs:serve`。上表后四项是本次走查新增的门禁，
+> `docs:dev` / `docs:build` / `docs:serve`。上表后五项是走查新增的门禁，
 > 已接进 `npm run check`。
+
+### 门禁自身的问题（D-31）
+
+前两个 Python 门禁原来**只打印 FAIL 却不设退出码**，所以 `run-all.sh` 里的
+
+```bash
+rc=$?
+if [ "$rc" -ne 0 ]; then ... exit "$rc"; fi
+```
+
+是**死代码**——`rc` 永远是 0，`npm run check` 永远通过，教程改错了也照绿。
+本轮给两个门禁补上 `sys.exit(1)`，新增的 examples 门禁一开始就带退出码。
+
+**反向验证**：把 examples 门禁里 A1 的期望值改回教程原来的错误值 `1.3`，
+门禁 exit 1、报 `255 PASS / 1 FAIL`；改回来 exit 0、`256 PASS`。
 

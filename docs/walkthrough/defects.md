@@ -137,7 +137,7 @@ BNF `SyntaxError: invalid syntax`。
 `python examples/statement/for-else.py` 报 `SyntaxError: expected ':'`。
 
 **修复**：补成完整的 for-else 与 try/except/else/finally 演示。
-这是 67 个示例文件里唯一的语法错误。
+这是全部示例文件里唯一的语法错误。
 
 ---
 
@@ -282,6 +282,368 @@ range   a=0   rest=[1, 2, 3]   type(rest)=list
 
 **验证**：浏览器实测该块输出
 `列表 -> [99, 2, 3]` / `集合长度 -> 3 元素 -> {1, 2, 3}` / `字典 -> {'x': 1, 'y': 2}`。
+
+
+---
+
+## 第三轮走查补充发现
+
+第三轮把 `examples/` 下 **66** 个文件逐条核对（前两轮只核对了 `docs/` 教程正文，
+`run-all.sh` 也只证明「进程退出码为 0」，不证明注释里写的结论是对的）。
+每条结论写进了 `.walkthrough/evidence/examples-claims-audit.py`，共 **256** 条断言。
+
+### D-19 `examples/number/converter.py` 注释写的值和实际输出不符
+
+**现象**：第一行注释写 `print(1.1 + 1.2) # 1.3`。
+
+**证据**：实测输出 `2.3`。
+
+```
+教程声称: '1.3'
+实际得到: '2.3'
+```
+
+**同类两处**：`print(1e5) # 100000` 实际输出 `100000.0`（科学计数法字面量
+**类型就是 float**，注释漏了 `.0`，会让人以为是 int）；
+`1j * 1j` / `1j / 1j` 的注释写 `-1 + 0j` / `1 + 0j`，实际 repr 带括号
+`(-1+0j)` / `(1+0j)`。
+
+**修复**：四处注释按实测改正，并给 `1e5` 补类型说明。
+
+**验证**：`examples-claims-audit.py` A1–A17 全 PASS。
+
+---
+
+### D-20 `examples/string/quote.py` 注释给输出加了不存在的反斜杠
+
+**现象**：`print('"Isn\'t," they said.') # "Isn\'t," they said.`
+
+**证据**：实际输出 `"Isn't," they said.`——`\'` 的转义在词法阶段就处理掉了，
+反斜杠不出现在输出里。注释让人以为输出带反斜杠。
+
+**修复**：注释改为真实输出，并注明「`\'` 的转义不出现在输出里」。
+
+---
+
+### D-21 `examples/string/slice.py` 唯一一行没有注释的结果是空行
+
+**现象**：`print(a[7:9])` 上方只有一句「不报错，返回空」，
+点运行后输出区是一个空行。
+
+**为什么是缺陷**：站点大量交互块的「空输出」已被学习者反馈过分不清
+「成功但没 print」和「坏了」（见 O-07）。这里连注释都没说清，
+初学者看到空行会以为程序出错。
+
+**修复**：注释补明「下标越界会抛 `IndexError`，但切片越界不报错，
+返回空字符串」，行尾加 `# （空）`。
+
+---
+
+### D-22 `examples/list/list_order.py` 两处注释词不达意
+
+**现象 1**：`# 字典排序,注意 list 必须为同一类型否则会报错`
+——「字典排序」想说的是「按字符编码排序」，但字面读起来像「用字典排」。
+
+**现象 2**：`# sorted 不该边原始排序`——「不该边」是错别字，
+整句无法解读（应为「不会改变原列表」）。
+
+**证据**：实测 `sorted(['A','tom','jerry','jack','1'])`
+→ `['1', 'A', 'jack', 'jerry', 'tom']`，顺序来自码位
+`'1'`(49) < `'A'`(65) < `'a'`(97) < `'j'`(106)，
+**和人类字典序不是一回事**（数字 < 大写 < 小写）。
+
+**修复**：改成「按字符编码（码位）排序」并补混类型的 `TypeError` 全文；
+第二处改成「`sorted()` 不改变原列表，返回排好序的新列表」。
+
+**验证**：断言 C17–C23。
+
+---
+
+### D-23 `examples/list/list_search.py` 错别字「第一各元素」
+
+**现象**：`# 第一各元素`，应为「第一个元素」。
+
+**修复**：改正。同类小错不影响运行，但教程素材里出现错别字会削弱可信度。
+
+---
+
+### D-24 `examples/api/string-operation.py` 打印标签拼错方法名
+
+**现象**：`print("str.rstripe():", ...)`——真实方法名是 `rstrip`。
+
+**证据**：`hasattr(str, 'rstripe')` → `False`，`hasattr(str, 'rstrip')` → `True`。
+
+**修复**：标签改为 `str.rstrip()`。
+
+---
+
+### D-25 `examples/statement/break.py` 注释语义与代码相反
+
+**现象**：`break` 上方写 `# jump to loop`（跳到循环）。
+
+**证据**：`break` 是**跳出**整个循环。该示例输出
+`first element greater 2 index:  2` 之后循环就结束了。
+
+**修复**：改成「`break` 跳出整个 while 循环，后面的迭代不再执行」。
+
+---
+
+### D-26 `statement/try.py` / `finally.py` 裸 `except:` + 输入合法时文案说非法
+
+**现象 1**：裸 `except:` 捕获一切。
+**证据**：子进程实测——
+
+```
+try:
+    raise KeyboardInterrupt
+except:
+    print('swallowed')
+→ swallowed（exit 0）
+```
+
+Ctrl+C 被吃掉，程序停不下来。
+
+**现象 2**：`print('x is illegal number')` 在 `try` 里、`int(input())`
+**成功之后**执行。送 `7` 进去走的就是这行——**数字是合法的，文案却说它非法**。
+另外 `"Oops!  That was no valid number."` 语法也不对。
+
+**修复**：两处都改成 `except ValueError:`（附注释说明为什么不能用裸 except），
+文案改成 `'x is a valid number:'` 和 `"Oops! That was not a valid number."`。
+
+**代价（如实记录）**：改成窄捕获后，`input()` 遇到 EOF 不再被吞，
+`run-all.sh`（stdin 接 `/dev/null`）里这两个文件的退出码从 0 变成 1。
+「需要交互 stdin」的示例数因此从 5 个变成 7 个——**这反而更诚实**：
+它们确实需要输入，此前只是被裸 except 掩盖了。
+
+**验证**：断言 F18–F21 + F13–F15；反向验证 `except ValueError` 仍能抓住 `'abc'`。
+
+---
+
+### D-27 `examples/_draft/42-function-attributes.py` 把本机绝对路径和内存地址写进提交物
+
+**现象**：示例打印 `hi.__globals__` 和 `say.__code__`。
+
+**证据**：`.walkthrough/evidence/examples-run.md` 里因此出现
+
+```
+<code object say at 0x0000027811FE0A80, file "C:\Users\cheng\...\42-function-attributes.py", line 16>
+{'__name__': '__main__', ..., '__file__': 'C:\\Users\\cheng\\...', ...}
+```
+
+内存地址每次运行都变，绝对路径随机器变——**这两行让「可复现证据」变成不可复现**，
+还把开发机路径提交进了仓库。
+
+**修复**：删掉 `print(hi.__globals__)`；`say.__code__` 换成确定性的
+`say.__code__.co_varnames`（输出 `('tom',)`）。
+
+---
+
+### D-28 `examples/_draft/21.types-number.py` 注释说 `//` 总返回 int
+
+**现象**：`# // divide operatr always a floor divide,return a integer`
+
+**证据**：`3 // 2` → `1`（int），但 `3 // 2.` → `1.0`（**float**）。
+**有一边是 float 时 `//` 返回 float。**
+
+**修复**：注释改明「两边都是 int 才返回 int；有一边是 float 时返回 float」。
+同类规则在 `_draft/12-use-variable.py` 里也有（`17.0 // 3` → `5.0`），已一并核对。
+
+---
+
+### D-29 `examples/_draft/11-define-variable.py` 是 0 字节空文件
+
+**现象**：`wc -c` 得 0。运行后无任何输出、退出码 0。
+
+**为什么是缺陷**：一个「定义了却什么都不做」的示例，
+学习者点运行看到空输出，无法区分「成功」和「坏了」（同 D-21）。
+
+**修复**：删除。`examples/` 文件数因此从 67 变为 **66**，
+所有笔记里的计数已同步改正。
+
+---
+
+### D-30 13 个示例用 `list` / `map` / `str` 当变量名，遮蔽内建
+
+**现象**：`examples/list/*`（6 个）、`examples/map/*`（5 个）、
+`examples/api/*`（2 个）共 13 个文件写 `list = [...]` / `map = {...}` / `str = "..."`。
+
+**证据**：子进程实测——
+
+```
+list = [1, 2, 3]
+list('abc')        # TypeError: 'list' object is not callable
+```
+
+学习者照抄后，同一脚本里再用内建 `list()` / `map()` / `str()` 就炸。
+这是「教语法时顺带教了坏习惯」。
+
+**修复**：`list` → `items`、`map` → `profile`、`str` → `text`，
+共重写 12 个文件（`list_order.py` 单独补改）。打印标签里描述**语法**的
+（如 `'list[0]:'`）保留不变，只改变量名。
+
+**验证**：门禁新增回归断言「用内建名当变量名的示例文件应为 0 个」；
+`grep -rn "^\s*\(list\|map\|str\)\s*=" examples/` 实测 0 处。
+
+---
+
+### D-31 三个断言门禁原来都不设退出码，`run-all.sh` 的失败判断是死代码
+
+**现象**：`unpack-claims-audit.py` 和 `concepts-round2-audit.py`
+只在屏幕上打印 `FAIL 明细`，然后**正常结束**（exit 0）。
+
+**证据**：`grep -n "sys.exit\|exit(" 两个文件` → 无匹配。
+而 `run-all.sh` 里写着
+
+```bash
+$PY "$EV/unpack-claims-audit.py" > ...
+rc=$?
+if [ "$rc" -ne 0 ]; then ... exit "$rc"; fi
+```
+
+`rc` 永远为 0，**这个 if 从来没有生效过**。`npm run check` 也就永远通过——
+教程改错了，门禁照绿。
+
+**修复**：两个门禁都在 FAIL 分支补 `sys.exit(1)`；新增的
+`examples-claims-audit.py` 一开始就带退出码。
+
+**验证（反向验证）**：把 `examples-claims-audit.py` 里 A1 的期望值从 `2.3`
+改回教程原来的错误值 `1.3`，门禁 exit 1、报 255 PASS / 1 FAIL；
+改回来 exit 0。已做。
+
+---
+
+### D-32 `class/define-with-statement.py` 用 `__module__` 判断主模块
+
+**现象**：类体里写 `if __module__ == '__main__':`。
+
+**证据**：实测两种写法行为完全一致（都打印 `main`）——
+`__module__` 在**类体里**能取到模块名（模块层取不到，`__module__` 不是模块级全局）。
+但惯用写法是 `__name__`，`__module__` 是描述符/类内部属性，
+用它做入口判断会让学习者以为这是标准写法。
+
+**修复**：改成 `if __name__ == '__main__':`，输出不变。
+
+---
+
+### D-33 `_draft/32-for.py` 与 `_draft/4x-lambda.py` 文件名和内容不符
+
+**现象**：
+
+| 文件 | 文件名暗示 | 实际内容 |
+|------|-----------|---------|
+| `_draft/32-for.py` | for 循环 | 斐波那契**函数**（内部用 while） |
+| `_draft/4x-lambda.py` | lambda | `for w, len(w)` 循环，**没有任何 lambda** |
+
+**为什么是缺陷**：学习者按文件名找「for 循环示例」会找到函数示例，
+按「lambda」找到 for 循环。文件名是这仓库唯一的索引。
+
+**处理**：**未改名**。`_draft/` 是草稿区，改名属于内容规划决策；
+已在 [examples 全量走查清单](/walkthrough/examples-audit) 里标注真实内容，
+等维护者决定这批草稿的去留（见 O-09）。
+
+---
+
+### D-34 走查笔记自己的目录计数对不上磁盘
+
+**现象**：`open.md` 写「`examples/number/`（6 个文件）、`string/`（7 个）、
+`list/`（7 个）、`map/`（5 个）、`comprehension/`（2 个）」，合计声称 27 个；
+`_draft/` 写 10 个、`function/` 写 7 个。
+
+**证据**：`find examples -name '*.py' | wc -l` 逐目录实测：
+
+| 目录 | 笔记声称 | 实测 |
+|------|---------|------|
+| `number/` | 6 | **3** |
+| `string/` | 7 | **8** |
+| `list/` | 7 | **6** |
+| `map/` | 5 | 5 |
+| `comprehension/` | 2 | 2 |
+| `_draft/` | 10 | **9** |
+| `function/` | 7 | **6** |
+| 合计 | — | **66** |
+
+**为什么是缺陷**：笔记第一行就写「声明数量必须等于实测数量」，
+结果自己的数字是估的。用估算数字做覆盖面判断，会漏掉整个目录。
+
+**修复**：全部按 `find` 实测改正；在 [L2 走查笔记](/walkthrough/l2-types)
+开头把「笔记数字也曾错过」这件事本身记录下来，作为方法论教训。
+
+---
+
+### D-35 `docs/.vitepress/theme/client.js` 是从未被加载的死代码
+
+**现象**：`theme/` 下有两个文件都定义 `window.__runPyDemo` /
+`window.__loadPyodide`，且都往 `<head>` 注入 Pyodide `<script>`：
+
+| 文件 | 按钮文案 | 输出区占位符 |
+|------|---------|-------------|
+| `theme/index.js` | `⏳ 运行中…` / `▶ 运行` | `(运行完成，但没有 print 输出——这段代码只做赋值)` |
+| `theme/client.js` | `⏳ Running...` / `Run` | `(no output)` |
+
+**证据（都来自构建产物，不是读代码的印象）**：
+
+```bash
+# 1. 构建产物的 theme chunk 里只有 index.js 的中文文案
+grep -o "⏳ 运行中…\|⏳ Running\.\.\." docs/.vitepress/dist/assets/chunks/theme.*.js
+# → ⏳ 运行中…        （没有任何 Running...）
+
+# 2. app 入口没有引用 client.js
+grep -o "client\.[a-z]*\.js" docs/.vitepress/dist/assets/app.*.js
+# → 无输出
+```
+
+**根因**：VitePress 的主题入口只有 `.vitepress/theme/index.{js,ts}`，
+`client.js` 不是约定文件名，也没有被 `index.js` import，所以**根本不进 bundle**。
+`node --check` 通过、语法没问题，但它一次都没执行过。
+
+**为什么重要**：它和上一轮删掉的 `pyodide-plugin.js`（D-14）是同一类问题——
+看起来在跑、实际没人加载。留着会让下一个人改错文件
+（改 `client.js` 的文案毫无效果，因为生效的是 `index.js`）。
+
+**修复**：删除。构建后 `npm run check` 全部门禁仍通过，按钮行为不变
+（文案本来就来自 `index.js`）。
+
+**顺带修正 O-04 的诊断**：此前记录「Pyodide 被加载两次（CDN + 本地），
+一个是 `client.js` 注入的 CDN」——**这个归因是错的**，`client.js` 从未执行。
+真正的两次注入来自 `config.js` 的 `head`（dev 用 CDN）和
+`theme/index.js`（dev 用本地 `/pyodide/`）。dead code 删除不影响加载次数。
+
+---
+
+### D-36 `.gitignore` 的 `.vitepress/cache` 匹配不到真实路径，缓存因此被提交
+
+**现象**：`.gitignore` 第 8 行写 `.vitepress/cache`，但仓库里
+`docs/.vitepress/cache/` 下 **12 个文件已被 git 跟踪**，
+且每次 `docs:build` / `docs:dev` 都会把它们弄脏。
+
+**证据**：
+
+```bash
+$ git check-ignore -v --no-index docs/.vitepress/cache/deps/vue.js
+（修改前）无输出 —— 该路径不被任何规则忽略
+
+$ git check-ignore -v docs/.vitepress/dist/index.html
+.gitignore:7:dist	docs/.vitepress/dist/index.html
+```
+
+**根因**：gitignore 模式里**带斜杠的规则锚定仓库根目录**。
+`.vitepress/cache` 含一个斜杠，所以只匹配 `<root>/.vitepress/cache`，
+匹配不到 `docs/.vitepress/cache`。而同行的 `dist` 不含斜杠，
+在任何层级都生效——所以 `docs/.vitepress/dist` 反而被正确忽略了。
+一行之差，一个生效一个不生效。
+
+**修复**：`.gitignore` 补 `docs/.vitepress/cache/` 与 `docs/.vitepress/dist/`
+（原行保留，避免影响根级路径）。修复后：
+
+```bash
+$ git check-ignore -v --no-index docs/.vitepress/cache/deps/vue.js
+.gitignore:12:docs/.vitepress/cache/	docs/.vitepress/cache/deps/vue.js
+```
+
+**未做**：已跟踪的那 12 个缓存文件**没有取消跟踪**（`git rm --cached`）。
+那是一次仓库级变更，按 O-02 的结论留给维护者确认后单独处理。
+本轮走查中我用 `git checkout -- docs/.vitepress/cache/` 恢复它们，
+没有把构建产生的缓存改动混进提交。
 
 
 ---
