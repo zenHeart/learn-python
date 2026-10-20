@@ -1,13 +1,8 @@
 ########## RUN MANIFEST ##########
-date: 2026-10-20T02:10:10+08:00
+date: 2026-10-20T13:28:05+08:00
 python: Python 3.11.9
 cwd: /c/Users/cheng/code/github/.worktrees/learn-python-stepfun-20261020
 note: stdin 来自 /dev/null，调用 input() 的示例会以 EOFError 结束
-
-================================================================
-### FILE: examples/_draft/11-define-variable.py
-### CMD: python "examples/_draft/11-define-variable.py" < /dev/null
---- stdout/stderr (exit=0) ---
 
 ================================================================
 ### FILE: examples/_draft/12-use-variable.py
@@ -86,8 +81,7 @@ change comment
 say
 hi1 say
 ('tom',)
-<code object say at 0x0000020C126E0A80, file "C:\Users\cheng\code\github\.worktrees\learn-python-stepfun-20261020\examples\_draft\42-function-attributes.py", line 16>
-{'__name__': '__main__', '__doc__': None, '__package__': None, '__loader__': <_frozen_importlib_external.SourceFileLoader object at 0x0000020C1275AC90>, '__spec__': None, '__annotations__': {}, '__builtins__': <module 'builtins' (built-in)>, '__file__': 'C:\\Users\\cheng\\code\\github\\.worktrees\\learn-python-stepfun-20261020\\examples\\_draft\\42-function-attributes.py', '__cached__': None, 'hi': <function hi at 0x0000020C12B293A0>, 'say': <function say at 0x0000020C12B294E0>}
+('tom',)
 {'a': {'a': 1}}
 None
 {}
@@ -123,8 +117,8 @@ str.title(): Hello World
 str.upper(): HELLO WORLD
 str.lower(): hello world
 'a''b': ab
-'1' + str: 1hello world
-str.rstripe(): 	hello world
+'1' + text: 1hello world
+str.rstrip(): 	hello world
 ================================================================
 ### FILE: examples/class/class_attr_class.py
 ### CMD: python "examples/class/class_attr_class.py" < /dev/null
@@ -275,7 +269,7 @@ name: jerry
 --- stdout/stderr (exit=0) ---
 origin list: [1, True, 'tom']
 append list: [1, True, 'tom', 'jack']
- 0 insert list: ['jack', 1, True, 'tom']
+0 insert list: ['jack', 1, True, 'tom']
 new_list: ['jack', 1, True, 'tom', 'tom']
 list: ['jack', 1, True, 'tom']
 [1]*5 [1, 1, 1, 1, 1]
@@ -436,9 +430,13 @@ EOFError: EOF when reading a line
 ================================================================
 ### FILE: examples/statement/finally.py
 ### CMD: python "examples/statement/finally.py" < /dev/null
---- stdout/stderr (exit=0) ---
-Please enter a number: Oops!  That was no valid number.
-over
+--- stdout/stderr (exit=1) ---
+Please enter a number: over
+Traceback (most recent call last):
+  File "C:\Users\cheng\code\github\.worktrees\learn-python-stepfun-20261020\examples\statement\finally.py", line 2, in <module>
+    x = int(input("Please enter a number: "))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+EOFError: EOF when reading a line
 ================================================================
 ### FILE: examples/statement/for.py
 ### CMD: python "examples/statement/for.py" < /dev/null
@@ -469,8 +467,12 @@ EOFError: EOF when reading a line
 ================================================================
 ### FILE: examples/statement/try.py
 ### CMD: python "examples/statement/try.py" < /dev/null
---- stdout/stderr (exit=0) ---
-Please enter a number: Oops!  That was no valid number.
+--- stdout/stderr (exit=1) ---
+Please enter a number: Traceback (most recent call last):
+  File "C:\Users\cheng\code\github\.worktrees\learn-python-stepfun-20261020\examples\statement\try.py", line 2, in <module>
+    x = int(input("Please enter a number: "))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+EOFError: EOF when reading a line
 ================================================================
 ### FILE: examples/statement/while.py
 ### CMD: python "examples/statement/while.py" < /dev/null
