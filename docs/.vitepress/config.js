@@ -57,6 +57,7 @@ module.exports = {
           { text: '🔖 标注规范', link: '/tutorial/annotation' },
           { text: '❓ 知识盲点', link: '/tutorial/gaps' },
           { text: '📐 拆包语法完全指南', link: '/tutorial/unpack' },
+          { text: '🔀 语法差异速通（对照 JS）', link: '/tutorial/js-syntax-diff' },
           { text: '🤖 手写 Agent Loop 与工具调用', link: '/tutorial/agent-loop' }
         ]
       }
