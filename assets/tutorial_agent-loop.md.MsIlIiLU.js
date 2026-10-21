@@ -1,0 +1,472 @@
+import{_ as n,o as t,c as s,ae as a}from"./chunks/framework.DJK_dC0-.js";const d=JSON.parse('{"title":"手写 Agent Loop 与工具调用","description":"","frontmatter":{},"headers":[],"relativePath":"tutorial/agent-loop.md","filePath":"tutorial/agent-loop.md"}'),e={name:"tutorial/agent-loop.md"};function u(p,o,r,l,c,q){return t(),s("div",null,[...o[0]||(o[0]=[a(`<h1 id="手写-agent-loop-与工具调用" tabindex="-1">手写 Agent Loop 与工具调用 <a class="header-anchor" href="#手写-agent-loop-与工具调用" aria-label="Permalink to &quot;手写 Agent Loop 与工具调用&quot;">​</a></h1><blockquote><p>面向有 JS/TS 经验、第一次用 Python 写 LLM Agent 的工程师。示例只用标准库，在线运行器（Python 3.11）与本机 Python 3.12 均可运行；需要网络或线程、子进程的示例用 <code>text</code> 围栏展示。</p></blockquote><hr><h2 id="一、一句话结论" tabindex="-1">一、一句话结论 <a class="header-anchor" href="#一、一句话结论" aria-label="Permalink to &quot;一、一句话结论&quot;">​</a></h2><p><strong>Agent Loop 就是一个循环：把「截至目前」的完整消息列表 <code>messages</code> 发给模型；如果返回的 assistant 消息带有 <code>tool_calls</code>（<code>finish_reason</code> 为 <code>tool_calls</code>），就在本地执行这些函数，把结果包成 <code>role=&quot;tool&quot;</code>、带 <code>tool_call_id</code> 的消息接回列表，直到模型不再请求工具。</strong> 模型只决定「调哪个工具、传什么参数」，真正执行工具的是你的代码。</p><p>用 Python 实现这一切只需要标准库：<code>dict</code> 承载 JSON，<code>json</code> 解析模型生成的参数字符串，<code>inspect</code> 校验参数，<code>asyncio</code> 管理并发。</p><p>依据：<a href="https://api-docs.deepseek.com/guides/tool_calls" target="_blank" rel="noreferrer">DeepSeek Tool Calls 指南</a>与 <a href="https://api-docs.deepseek.com/api/create-chat-completion" target="_blank" rel="noreferrer">Chat Completions API 参考</a>（OpenAI 兼容协议）。</p><hr><h2 id="二、与-js-ts-的对照" tabindex="-1">二、与 JS/TS 的对照 <a class="header-anchor" href="#二、与-js-ts-的对照" aria-label="Permalink to &quot;二、与 JS/TS 的对照&quot;">​</a></h2><table tabindex="0"><thead><tr><th>主题</th><th>JS/TS</th><th>Python</th><th>注意点</th></tr></thead><tbody><tr><td>序列化</td><td><code>JSON.stringify</code></td><td><code>json.dumps</code></td><td><code>ensure_ascii</code> 默认为 <code>True</code>，中文会被转义，需要原样输出时传 <code>ensure_ascii=False</code></td></tr><tr><td>解析失败</td><td><code>JSON.parse</code> 抛 <code>SyntaxError</code></td><td><code>json.loads</code> 抛 <code>json.JSONDecodeError</code></td><td>模型生成的 <code>arguments</code> 属于不可信输入，解析前先限制长度</td></tr><tr><td>真假值</td><td>空数组、空对象为真</td><td>空序列、空集合、空 dict 为假</td><td><code>if []</code> 在两边结果相反</td></tr><tr><td>默认参数</td><td>每次调用重新求值</td><td>定义函数时只求值一次</td><td><code>def f(acc=[])</code> 的可变默认值会在调用间共享</td></tr><tr><td>类型注解</td><td>TS 类型编译后擦除</td><td>注解运行时不强制</td><td>两边都需要运行时校验外部输入</td></tr><tr><td>子进程</td><td><code>exec</code> 经由 shell，<code>execFile</code> 不经 shell</td><td><code>subprocess.run</code> 的 <code>shell</code> 默认为 <code>False</code></td><td><code>shell=True</code> 拼接用户输入有命令注入风险</td></tr><tr><td>并发聚合</td><td><code>Promise.all</code></td><td><code>asyncio.TaskGroup</code></td><td>任一子任务异常会取消其余任务，异常聚合为 <code>ExceptionGroup</code>，用 <code>except*</code> 捕获</td></tr><tr><td>超时</td><td><code>AbortController</code> 配合竞速</td><td><code>asyncio.timeout</code></td><td>超时抛 <code>TimeoutError</code>，要在上下文管理器外部捕获</td></tr><tr><td>阻塞调用</td><td><code>worker_threads</code></td><td><code>asyncio.to_thread</code></td><td>阻塞函数放进线程，避免卡住事件循环</td></tr></tbody></table><p>对应官方文档：</p><ul><li>Python：<a href="https://docs.python.org/3.12/library/json.html" target="_blank" rel="noreferrer">json</a>、<a href="https://docs.python.org/3.12/library/asyncio-task.html" target="_blank" rel="noreferrer">asyncio 任务</a>、<a href="https://docs.python.org/3.12/library/subprocess.html" target="_blank" rel="noreferrer">subprocess</a>、<a href="https://docs.python.org/3.12/library/stdtypes.html#truth-value-testing" target="_blank" rel="noreferrer">真值检测</a>、<a href="https://docs.python.org/3.12/library/inspect.html#inspect.Signature.bind" target="_blank" rel="noreferrer">inspect.Signature.bind</a></li><li>JS：<a href="https://developer.mozilla.org/en-US/docs/Glossary/Falsy" target="_blank" rel="noreferrer">MDN Falsy</a>、<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse" target="_blank" rel="noreferrer">MDN JSON.parse</a>、<a href="https://nodejs.org/docs/latest/api/child_process.html" target="_blank" rel="noreferrer">Node.js child_process</a></li></ul><hr><h2 id="三、四个示例" tabindex="-1">三、四个示例 <a class="header-anchor" href="#三、四个示例" aria-label="Permalink to &quot;三、四个示例&quot;">​</a></h2><h3 id="示例-1-最小-agent-loop" tabindex="-1">示例 1：最小 Agent Loop <a class="header-anchor" href="#示例-1-最小-agent-loop" aria-label="Permalink to &quot;示例 1：最小 Agent Loop&quot;">​</a></h3><p>协议要点（依据 DeepSeek 文档）：</p><ul><li>请求体的 <code>messages</code> 是截至目前的完整对话，每一轮都要重发全部历史；</li><li><code>tools</code> 描述可调用的函数，<code>parameters</code> 用 JSON Schema，<code>description</code> 帮助模型判断何时调用；</li><li>模型想调工具时，assistant 消息带 <code>tool_calls</code>，每次调用有唯一 <code>id</code>；</li><li>工具结果以 <code>role=&quot;tool&quot;</code> 回传，用 <code>tool_call_id</code> 指明对应哪一次调用；</li><li><code>finish_reason</code> 为 <code>tool_calls</code> 表示模型发起了工具调用。</li></ul><p>下面用一个规则驱动的「假模型」离线跑通协议：</p><div class="py-demo"><div class="py-demo-header"><span>Python</span><button class="py-demo-run" type="button">Run</button></div><pre class="language-python"><code>import json
+
+# 1. 工具描述：就是普通 dict，序列化后原样进入请求体
+TOOLS = [
+    {
+        &quot;type&quot;: &quot;function&quot;,
+        &quot;function&quot;: {
+            &quot;name&quot;: &quot;search_interview_qa&quot;,
+            &quot;description&quot;: &quot;在面经库里检索与 query 最相关的问答片段，返回 JSON 数组。&quot;,
+            &quot;parameters&quot;: {
+                &quot;type&quot;: &quot;object&quot;,
+                &quot;properties&quot;: {
+                    &quot;query&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;检索关键词&quot;},
+                    &quot;top_k&quot;: {&quot;type&quot;: &quot;integer&quot;, &quot;description&quot;: &quot;返回条数，取值 1-5&quot;},
+                },
+                &quot;required&quot;: [&quot;query&quot;],
+            },
+        },
+    }
+]
+
+# 2. 本地工具实现：模型只「点菜」，做菜的是我们自己的代码
+CORPUS = [
+    {&quot;id&quot;: &quot;Q1&quot;, &quot;q&quot;: &quot;Python 的 GIL 是什么？&quot;,
+     &quot;a&quot;: &quot;GIL 是全局解释器锁，同一时刻只允许一个线程执行 Python 字节码；&quot;
+          &quot;因此多线程适合 IO 密集，CPU 密集要用多进程。&quot;},
+    {&quot;id&quot;: &quot;Q2&quot;, &quot;q&quot;: &quot;装饰器是怎么实现的？&quot;,
+     &quot;a&quot;: &quot;装饰器是接收函数并返回新函数的高阶函数，@decorator 语法只是语法糖，&quot;
+          &quot;常用于日志、鉴权、缓存等横切逻辑。&quot;},
+    {&quot;id&quot;: &quot;Q3&quot;, &quot;q&quot;: &quot;列表去重有哪些方法？&quot;,
+     &quot;a&quot;: &quot;可用 dict.fromkeys 保序去重，或 set 去重（不保序）；数据量大时注意复杂度。&quot;},
+]
+
+
+def search_interview_qa(query, top_k=3):
+    &quot;&quot;&quot;极简检索：按 query 与题目文本的字重合度打分（教学用）。&quot;&quot;&quot;
+    scored = []
+    for doc in CORPUS:
+        score = sum(ch in doc[&quot;q&quot;] for ch in query if not ch.isspace())
+        scored.append((score, doc))
+    scored.sort(key=lambda item: item[0], reverse=True)
+    return [{&quot;id&quot;: doc[&quot;id&quot;], &quot;q&quot;: doc[&quot;q&quot;], &quot;a&quot;: doc[&quot;a&quot;], &quot;score&quot;: score}
+            for score, doc in scored[:top_k] if score &gt; 0]
+
+
+TOOL_IMPL = {&quot;search_interview_qa&quot;: search_interview_qa}
+
+
+# 3. 假模型：用规则模拟「模型决定调用工具」，离线可跑、行为确定。
+#    真实响应里 finish_reason 在 choice 上，这里为教学合并进消息 dict。
+def fake_model(messages, tools):
+    already_called = any(m[&quot;role&quot;] == &quot;tool&quot; for m in messages)
+    last_user = next((m[&quot;content&quot;] for m in reversed(messages) if m[&quot;role&quot;] == &quot;user&quot;), &quot;&quot;)
+    if not already_called and &quot;面经&quot; in last_user:
+        return {
+            &quot;role&quot;: &quot;assistant&quot;,
+            &quot;content&quot;: None,
+            &quot;tool_calls&quot;: [{
+                &quot;id&quot;: &quot;call_001&quot;,
+                &quot;type&quot;: &quot;function&quot;,
+                &quot;function&quot;: {
+                    &quot;name&quot;: &quot;search_interview_qa&quot;,
+                    # 注意：arguments 是 JSON 字符串，不是 dict
+                    &quot;arguments&quot;: json.dumps({&quot;query&quot;: last_user, &quot;top_k&quot;: 2},
+                                            ensure_ascii=False),
+                },
+            }],
+            &quot;finish_reason&quot;: &quot;tool_calls&quot;,
+        }
+    # 已经拿到工具结果 -&gt; 基于结果生成最终回答
+    hits = [json.loads(m[&quot;content&quot;]) for m in messages if m[&quot;role&quot;] == &quot;tool&quot;]
+    lines = [f&quot;- {h[&#39;id&#39;]} {h[&#39;q&#39;]}：{h[&#39;a&#39;]}&quot; for batch in hits for h in batch]
+    return {&quot;role&quot;: &quot;assistant&quot;,
+            &quot;content&quot;: &quot;根据面经库检索结果：\\n&quot; + &quot;\\n&quot;.join(lines),
+            &quot;finish_reason&quot;: &quot;stop&quot;}
+
+
+# 4. Agent Loop 本体：for + max_steps 兜底，比裸 while True 更安全
+def run_agent_loop(question, model_fn=fake_model, max_steps=8):
+    messages = [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: question}]
+    for step in range(1, max_steps + 1):
+        print(f&quot;--- 第 {step} 轮：向模型发送 {len(messages)} 条消息（全量历史）&quot;)
+        msg = model_fn(messages, TOOLS)
+        messages.append(msg)  # assistant 消息（含 tool_calls）原样入列
+        if msg.get(&quot;finish_reason&quot;) != &quot;tool_calls&quot;:
+            return msg[&quot;content&quot;] or &quot;&quot;
+        for call in msg[&quot;tool_calls&quot;]:
+            name = call[&quot;function&quot;][&quot;name&quot;]
+            raw_args = call[&quot;function&quot;][&quot;arguments&quot;]
+            fn = TOOL_IMPL[name]
+            try:
+                result = fn(**json.loads(raw_args))
+                content = json.dumps(result, ensure_ascii=False)
+            except Exception as exc:  # 工具失败不该炸掉整个 loop
+                content = f&quot;工具调用失败：{type(exc).__name__}: {exc}&quot;
+            messages.append({&quot;role&quot;: &quot;tool&quot;, &quot;tool_call_id&quot;: call[&quot;id&quot;],
+                             &quot;content&quot;: content})
+    return &quot;（已达到 max_steps，强制退出）&quot;
+
+
+print(run_agent_loop(&quot;面经里关于 Python GIL 和装饰器说了什么？&quot;))
+</code></pre><div class="py-demo-output">Click Run to see output</div></div><p>预期输出：</p><div class="language-text vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">text</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>--- 第 1 轮：向模型发送 1 条消息（全量历史）</span></span>
+<span class="line"><span>--- 第 2 轮：向模型发送 3 条消息（全量历史）</span></span>
+<span class="line"><span>根据面经库检索结果：</span></span>
+<span class="line"><span>- Q1 Python 的 GIL 是什么？：GIL 是全局解释器锁，同一时刻只允许一个线程执行 Python 字节码；因此多线程适合 IO 密集，CPU 密集要用多进程。</span></span>
+<span class="line"><span>- Q2 装饰器是怎么实现的？：装饰器是接收函数并返回新函数的高阶函数，@decorator 语法只是语法糖，常用于日志、鉴权、缓存等横切逻辑。</span></span></code></pre></div><p>三个要点：</p><ol><li><strong>协议就是消息列表的增删</strong>：<code>user</code> 起头，<code>assistant</code>（带 <code>tool_calls</code>）追加，<code>tool</code> 结果回填，再回到模型。第 2 轮发送 3 条消息，说明历史是全量重发的。</li><li><strong><code>tool_calls</code> 是数组</strong>：模型一次可以请求多个工具，示例 3 处理这种情况。</li><li><strong><code>max_steps</code> 是底线</strong>：模型可能反复请求同一个工具，没有上限的 <code>while True</code> 会持续消耗调用额度。</li></ol><h3 id="示例-2-把模型输出当作不可信输入" tabindex="-1">示例 2：把模型输出当作不可信输入 <a class="header-anchor" href="#示例-2-把模型输出当作不可信输入" aria-label="Permalink to &quot;示例 2：把模型输出当作不可信输入&quot;">​</a></h3><p>DeepSeek 文档指出，<code>function.arguments</code> 是模型生成的 JSON 字符串，模型并不总是生成合法 JSON，也可能生成函数 schema 中没有的参数，调用函数前需要在代码里校验。下面的 <code>parse_tool_arguments</code> 依次设置四道检查：</p><div class="py-demo"><div class="py-demo-header"><span>Python</span><button class="py-demo-run" type="button">Run</button></div><pre class="language-python"><code>import inspect
+import json
+from typing import get_type_hints
+
+MAX_ARGS_BYTES = 4096  # 长度闸门：限制待解析数据的大小
+
+
+class ToolArgumentError(ValueError):
+    &quot;&quot;&quot;工具参数不合法。消息会作为 tool 消息内容喂回模型，而不是炸掉 loop。&quot;&quot;&quot;
+
+
+def search_interview_qa(query: str, top_k: int = 3) -&gt; list:
+    return [{&quot;id&quot;: &quot;Q1&quot;, &quot;q&quot;: &quot;示例命中&quot;, &quot;a&quot;: &quot;……&quot;}]
+
+
+def parse_tool_arguments(fn, raw):
+    &quot;&quot;&quot;把模型生成的 arguments 字符串安全地变成 fn 的 kwargs。&quot;&quot;&quot;
+    # 1) 长度闸门
+    if len(raw.encode(&quot;utf-8&quot;)) &gt; MAX_ARGS_BYTES:
+        raise ToolArgumentError(&quot;arguments 超过长度上限&quot;)
+    # 2) 只信 json.loads，并接住 JSONDecodeError
+    try:
+        args = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ToolArgumentError(f&quot;不是合法 JSON：{exc}&quot;) from exc
+    # 3) 顶层必须是 object
+    if not isinstance(args, dict):
+        raise ToolArgumentError(&quot;arguments 顶层必须是 JSON object&quot;)
+    # 4) 签名绑定：校验参数名与形态，多出来的字段在这里现形
+    try:
+        inspect.signature(fn).bind(**args)
+    except TypeError as exc:
+        raise ToolArgumentError(f&quot;参数与函数签名不匹配：{exc}&quot;) from exc
+    # 5) bind 只管「绑得上」，不校验类型；按注解补一次轻量检查
+    hints = get_type_hints(fn)
+    for key, value in args.items():
+        if hints.get(key) is int and not isinstance(value, int):
+            raise ToolArgumentError(f&quot;参数 {key} 需要 int，实际是 {type(value).__name__}&quot;)
+    return args
+
+
+CASES = [
+    (&quot;合法参数&quot;, &#39;{&quot;query&quot;: &quot;GIL&quot;, &quot;top_k&quot;: 2}&#39;),
+    (&quot;模型输出坏 JSON&quot;, &#39;{&quot;query&quot;: &quot;GIL&quot;, &quot;top_k&quot;: 2&#39;),   # 缺右括号
+    (&quot;幻觉出的参数名&quot;, &#39;{&quot;query&quot;: &quot;GIL&quot;, &quot;limit&quot;: 10}&#39;),  # schema 里没有 limit
+    (&quot;参数类型不对&quot;, &#39;{&quot;query&quot;: &quot;GIL&quot;, &quot;top_k&quot;: &quot;很多&quot;}&#39;),  # str 传给 int 形参
+    (&quot;顶层不是 object&quot;, &#39;[&quot;GIL&quot;]&#39;),
+    (&quot;超长输入&quot;, &#39;{&quot;query&quot;: &quot;&#39; + &quot;GIL&quot; * 2000 + &#39;&quot;}&#39;),
+]
+
+for title, raw in CASES:
+    try:
+        print(f&quot;{title} -&gt; OK: {parse_tool_arguments(search_interview_qa, raw)}&quot;)
+    except ToolArgumentError as exc:
+        # 关键：把错误原因作为 tool 消息发回模型，让它自我修正
+        print(f&quot;{title} -&gt; 喂回模型的错误信息: {exc}&quot;)
+</code></pre><div class="py-demo-output">Click Run to see output</div></div><p>预期输出：</p><div class="language-text vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">text</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>合法参数 -&gt; OK: {&#39;query&#39;: &#39;GIL&#39;, &#39;top_k&#39;: 2}</span></span>
+<span class="line"><span>模型输出坏 JSON -&gt; 喂回模型的错误信息: 不是合法 JSON：Expecting &#39;,&#39; delimiter: line 1 column 28 (char 27)</span></span>
+<span class="line"><span>幻觉出的参数名 -&gt; 喂回模型的错误信息: 参数与函数签名不匹配：got an unexpected keyword argument &#39;limit&#39;</span></span>
+<span class="line"><span>参数类型不对 -&gt; 喂回模型的错误信息: 参数 top_k 需要 int，实际是 str</span></span>
+<span class="line"><span>顶层不是 object -&gt; 喂回模型的错误信息: arguments 顶层必须是 JSON object</span></span>
+<span class="line"><span>超长输入 -&gt; 喂回模型的错误信息: arguments 超过长度上限</span></span></code></pre></div><p>设计要点：</p><ul><li><strong>失败即反馈</strong>：错误文本作为 <code>tool</code> 消息发回模型，模型下一轮通常能据此修正参数，比直接抛异常终止 loop 更稳健。练习中有完整演示。</li><li><strong><code>bind</code> 不校验类型</strong>：它只检查参数名和个数能否匹配，所以补了基于注解的轻量类型检查；生产环境建议改用 JSON Schema 校验库。</li><li><strong>不要用 <code>eval</code> 解析参数</strong>：官方文档说明 <code>eval</code> 会执行任意代码，对用户输入使用可能带来安全漏洞，而模型输出应按用户输入对待。解析 JSON 请使用 <code>json.loads</code>。</li></ul><p>依据：<a href="https://docs.python.org/3.12/library/json.html" target="_blank" rel="noreferrer">json 模块文档</a>（含对不可信 JSON 的资源消耗提示）、<a href="https://docs.python.org/3.12/library/functions.html#eval" target="_blank" rel="noreferrer"><code>eval</code> 内置函数文档</a>、<a href="https://docs.python.org/3.12/library/inspect.html#inspect.Signature.bind" target="_blank" rel="noreferrer"><code>inspect.Signature.bind</code></a>。</p><h3 id="示例-3-一次返回多个-tool-call——并发、超时与阻塞工具" tabindex="-1">示例 3：一次返回多个 tool_call——并发、超时与阻塞工具 <a class="header-anchor" href="#示例-3-一次返回多个-tool-call——并发、超时与阻塞工具" aria-label="Permalink to &quot;示例 3：一次返回多个 tool_call——并发、超时与阻塞工具&quot;">​</a></h3><p>协议不规定多个 <code>tool_call</code> 的执行顺序。彼此无依赖的工具应当并发执行，否则延迟线性叠加。Python 3.11 起提供 <code>asyncio.TaskGroup</code> 与 <code>asyncio.timeout</code>，对应 JS 里的 <code>Promise.all</code> 与超时控制。该示例用到事件循环、线程和子进程，浏览器内的运行器不支持，请在本机运行（<code>python3 example3.py</code>）：</p><div class="language-text vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">text</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>import asyncio</span></span>
+<span class="line"><span>import subprocess</span></span>
+<span class="line"><span>import sys</span></span>
+<span class="line"><span>import time</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>class ToolArgumentError(ValueError):</span></span>
+<span class="line"><span>    pass</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>async def tool_search_qa(query, delay=0.1):</span></span>
+<span class="line"><span>    await asyncio.sleep(delay)  # 模拟等模型 / 等数据库</span></span>
+<span class="line"><span>    return {&quot;tool&quot;: &quot;search_qa&quot;, &quot;query&quot;: query, &quot;hits&quot;: 2}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>async def tool_fetch_url(url, delay=0.1):</span></span>
+<span class="line"><span>    await asyncio.sleep(delay)</span></span>
+<span class="line"><span>    return {&quot;tool&quot;: &quot;fetch_url&quot;, &quot;url&quot;: url, &quot;bytes&quot;: 1234}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>def tool_grep_corpus(pattern, timeout=2.0):</span></span>
+<span class="line"><span>    &quot;&quot;&quot;同步阻塞工具：subprocess 超时后会杀死子进程并等待其结束，再抛 TimeoutExpired。&quot;&quot;&quot;</span></span>
+<span class="line"><span>    proc = subprocess.run(</span></span>
+<span class="line"><span>        [sys.executable, &quot;-c&quot;, &quot;import time; time.sleep(30)&quot;],  # 故意卡住</span></span>
+<span class="line"><span>        capture_output=True, text=True, timeout=timeout,</span></span>
+<span class="line"><span>    )</span></span>
+<span class="line"><span>    return {&quot;tool&quot;: &quot;grep_corpus&quot;, &quot;pattern&quot;: pattern, &quot;returncode&quot;: proc.returncode}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>ASYNC_TOOLS = {&quot;search_qa&quot;: tool_search_qa, &quot;fetch_url&quot;: tool_fetch_url}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>async def run_one(call):</span></span>
+<span class="line"><span>    name, args = call[&quot;name&quot;], call[&quot;args&quot;]</span></span>
+<span class="line"><span>    if name in ASYNC_TOOLS:</span></span>
+<span class="line"><span>        return await ASYNC_TOOLS[name](**args)</span></span>
+<span class="line"><span>    if name == &quot;grep_corpus&quot;:</span></span>
+<span class="line"><span>        return await asyncio.to_thread(tool_grep_corpus, **args)  # 阻塞函数进线程</span></span>
+<span class="line"><span>    raise ToolArgumentError(f&quot;未知工具：{name}&quot;)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>async def run_tool_calls(calls, budget=1.0):</span></span>
+<span class="line"><span>    &quot;&quot;&quot;并发执行一批 tool_call；budget 是总预算（秒）。&quot;&quot;&quot;</span></span>
+<span class="line"><span>    try:</span></span>
+<span class="line"><span>        async with asyncio.timeout(budget):</span></span>
+<span class="line"><span>            failure = None</span></span>
+<span class="line"><span>            try:</span></span>
+<span class="line"><span>                async with asyncio.TaskGroup() as tg:</span></span>
+<span class="line"><span>                    tasks = [tg.create_task(run_one(c)) for c in calls]</span></span>
+<span class="line"><span>            except* ToolArgumentError as eg:  # ExceptionGroup 用 except* 接</span></span>
+<span class="line"><span>                failure = {&quot;tool&quot;: &quot;*&quot;, &quot;error&quot;: f&quot;{len(eg.exceptions)} 个工具失败：{eg.exceptions}&quot;}</span></span>
+<span class="line"><span>            if failure is not None:  # return 不能写在 except* 块里</span></span>
+<span class="line"><span>                return failure</span></span>
+<span class="line"><span>        return [t.result() for t in tasks]</span></span>
+<span class="line"><span>    except TimeoutError:  # 只能在 timeout 上下文外部捕获</span></span>
+<span class="line"><span>        return [{&quot;tool&quot;: &quot;*&quot;, &quot;error&quot;: f&quot;总预算 {budget}s 用尽，未完成的任务已被取消&quot;}]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>def demo_calls():</span></span>
+<span class="line"><span>    return [</span></span>
+<span class="line"><span>        {&quot;name&quot;: &quot;search_qa&quot;, &quot;args&quot;: {&quot;query&quot;: &quot;GIL&quot;}},</span></span>
+<span class="line"><span>        {&quot;name&quot;: &quot;fetch_url&quot;, &quot;args&quot;: {&quot;url&quot;: &quot;https://example.com&quot;}},</span></span>
+<span class="line"><span>    ]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>async def main():</span></span>
+<span class="line"><span>    print(&quot;== 场景 A：两个异步工具并发，总预算 1s ==&quot;)</span></span>
+<span class="line"><span>    started = time.perf_counter()</span></span>
+<span class="line"><span>    print(await run_tool_calls(demo_calls(), budget=1.0))</span></span>
+<span class="line"><span>    print(f&quot;耗时 {time.perf_counter() - started:.2f}s（串行约 0.2s）&quot;)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    print(&quot;== 场景 B：预算只有 0.05s，超时取消 ==&quot;)</span></span>
+<span class="line"><span>    print(await run_tool_calls(demo_calls(), budget=0.05))</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    print(&quot;== 场景 C：一个工具抛异常，TaskGroup 取消其余任务 ==&quot;)</span></span>
+<span class="line"><span>    print(await run_tool_calls(demo_calls() + [{&quot;name&quot;: &quot;no_such_tool&quot;, &quot;args&quot;: {}}]))</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    print(&quot;== 场景 D：阻塞工具经 to_thread 执行，超时被杀 ==&quot;)</span></span>
+<span class="line"><span>    try:</span></span>
+<span class="line"><span>        await asyncio.to_thread(tool_grep_corpus, &quot;GIL&quot;, 0.5)</span></span>
+<span class="line"><span>    except subprocess.TimeoutExpired as exc:</span></span>
+<span class="line"><span>        print(f&quot;TimeoutExpired：{exc.timeout}s 后超时，子进程已被杀死&quot;)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>asyncio.run(main())</span></span></code></pre></div><p>预期输出：</p><div class="language-text vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">text</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>== 场景 A：两个异步工具并发，总预算 1s ==</span></span>
+<span class="line"><span>[{&#39;tool&#39;: &#39;search_qa&#39;, &#39;query&#39;: &#39;GIL&#39;, &#39;hits&#39;: 2}, {&#39;tool&#39;: &#39;fetch_url&#39;, &#39;url&#39;: &#39;https://example.com&#39;, &#39;bytes&#39;: 1234}]</span></span>
+<span class="line"><span>耗时 0.10s（串行约 0.2s）</span></span>
+<span class="line"><span>== 场景 B：预算只有 0.05s，超时取消 ==</span></span>
+<span class="line"><span>[{&#39;tool&#39;: &#39;*&#39;, &#39;error&#39;: &#39;总预算 0.05s 用尽，未完成的任务已被取消&#39;}]</span></span>
+<span class="line"><span>== 场景 C：一个工具抛异常，TaskGroup 取消其余任务 ==</span></span>
+<span class="line"><span>{&#39;tool&#39;: &#39;*&#39;, &#39;error&#39;: &quot;1 个工具失败：(ToolArgumentError(&#39;未知工具：no_such_tool&#39;),)&quot;}</span></span>
+<span class="line"><span>== 场景 D：阻塞工具经 to_thread 执行，超时被杀 ==</span></span>
+<span class="line"><span>TimeoutExpired：0.5s 后超时，子进程已被杀死</span></span></code></pre></div><p>四个语义，迁移时逐一对应：</p><ol><li><strong><code>TaskGroup</code> 不等于 <code>Promise.all</code></strong>：第一个非 <code>CancelledError</code> 异常会取消组内剩余任务，所有异常最终打包为 <code>ExceptionGroup</code>，要用 <code>except*</code> 捕获（场景 C）。<code>return</code>、<code>break</code> 不能出现在 <code>except*</code> 块内，所以先存变量再返回。</li><li><strong><code>asyncio.timeout</code> 把取消转换为超时</strong>：超时后取消当前任务，并把内部的 <code>CancelledError</code> 转成 <code>TimeoutError</code>，只能在上下文管理器外部捕获（场景 B）。</li><li><strong>阻塞函数进线程</strong>：<code>asyncio.to_thread</code> 面向会阻塞事件循环的 IO 密集函数（场景 D）。</li><li><strong>同步工具也要有超时</strong>：<code>subprocess</code> 超时后会终止子进程并等待其结束，再抛 <code>TimeoutExpired</code>。</li></ol><p>依据：<a href="https://docs.python.org/3.12/library/asyncio-task.html" target="_blank" rel="noreferrer">asyncio 任务文档</a>（<code>TaskGroup</code>、<code>timeout</code>、<code>to_thread</code>）、<a href="https://docs.python.org/3.12/library/subprocess.html" target="_blank" rel="noreferrer">subprocess 文档</a>。</p><h3 id="示例-4-把假模型换成真实-http-客户端" tabindex="-1">示例 4：把假模型换成真实 HTTP 客户端 <a class="header-anchor" href="#示例-4-把假模型换成真实-http-客户端" aria-label="Permalink to &quot;示例 4：把假模型换成真实 HTTP 客户端&quot;">​</a></h3><p>示例 1 的 <code>run_agent_loop</code> 通过 <code>model_fn</code> 参数注入模型，换成真实接口时 loop 本身不用改。下面用标准库 <code>urllib.request</code> 构造 OpenAI 兼容端点的请求，需要你自己的 API Key 和网络，因此用 <code>text</code> 围栏展示，不在页面中运行：</p><div class="language-text vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">text</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>import json</span></span>
+<span class="line"><span>import os</span></span>
+<span class="line"><span>import urllib.request</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>BASE_URL = &quot;https://api.deepseek.com&quot;   # OpenAI 兼容端点</span></span>
+<span class="line"><span>MODEL = &quot;deepseek-chat&quot;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>def chat_completions(messages, tools, api_key, timeout=30.0):</span></span>
+<span class="line"><span>    &quot;&quot;&quot;POST {BASE_URL}/chat/completions，返回解析后的响应 dict。&quot;&quot;&quot;</span></span>
+<span class="line"><span>    payload = json.dumps({</span></span>
+<span class="line"><span>        &quot;model&quot;: MODEL,</span></span>
+<span class="line"><span>        &quot;messages&quot;: messages,</span></span>
+<span class="line"><span>        &quot;tools&quot;: tools,</span></span>
+<span class="line"><span>        # 不传 tool_choice：有 tools 时默认是 auto</span></span>
+<span class="line"><span>    }).encode(&quot;utf-8&quot;)</span></span>
+<span class="line"><span>    req = urllib.request.Request(</span></span>
+<span class="line"><span>        f&quot;{BASE_URL}/chat/completions&quot;,</span></span>
+<span class="line"><span>        data=payload,</span></span>
+<span class="line"><span>        headers={</span></span>
+<span class="line"><span>            &quot;Authorization&quot;: f&quot;Bearer {api_key}&quot;,</span></span>
+<span class="line"><span>            &quot;Content-Type&quot;: &quot;application/json&quot;,</span></span>
+<span class="line"><span>        },</span></span>
+<span class="line"><span>        method=&quot;POST&quot;,</span></span>
+<span class="line"><span>    )</span></span>
+<span class="line"><span>    # timeout 单位是秒，必须显式传</span></span>
+<span class="line"><span>    with urllib.request.urlopen(req, timeout=timeout) as resp:</span></span>
+<span class="line"><span>        return json.loads(resp.read())</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>def real_model(messages, tools):</span></span>
+<span class="line"><span>    &quot;&quot;&quot;适配成 fake_model 的签名，run_agent_loop 不用改。&quot;&quot;&quot;</span></span>
+<span class="line"><span>    api_key = os.environ.get(&quot;API_KEY&quot;, &quot;&quot;)</span></span>
+<span class="line"><span>    if not api_key:</span></span>
+<span class="line"><span>        raise RuntimeError(&quot;缺少 API_KEY 环境变量&quot;)</span></span>
+<span class="line"><span>    data = chat_completions(messages, tools, api_key)</span></span>
+<span class="line"><span>    choice = data[&quot;choices&quot;][0]</span></span>
+<span class="line"><span>    msg = choice[&quot;message&quot;]</span></span>
+<span class="line"><span>    msg[&quot;finish_reason&quot;] = choice[&quot;finish_reason&quot;]  # finish_reason 在 choice 上，并回消息里</span></span>
+<span class="line"><span>    return msg</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 用法：print(run_agent_loop(&quot;面经里关于 GIL 说了什么？&quot;, model_fn=real_model))</span></span></code></pre></div><p>三个工程细节：</p><ul><li><strong><code>urlopen</code> 的 <code>timeout</code></strong>：以秒为单位限制连接等阻塞操作，需要显式传入；</li><li><strong><code>HTTPError</code> 同时是异常和 file-like 对象</strong>：4xx、5xx 时可以用 <code>exc.read()</code> 读取服务端返回的错误 JSON；</li><li><strong><code>tool_choice</code> 可以不传</strong>：没有 <code>tools</code> 时默认 <code>none</code>，有 <code>tools</code> 时默认 <code>auto</code>。</li></ul><p>依据：<a href="https://docs.python.org/3.12/library/urllib.request.html" target="_blank" rel="noreferrer">urllib.request 文档</a>、<a href="https://docs.python.org/3.12/library/urllib.error.html" target="_blank" rel="noreferrer">urllib.error 文档</a>、<a href="https://api-docs.deepseek.com/api/create-chat-completion" target="_blank" rel="noreferrer">DeepSeek Chat Completions API</a>。</p><hr><h2 id="四、练习-面经检索问答-agent" tabindex="-1">四、练习：面经检索问答 Agent <a class="header-anchor" href="#四、练习-面经检索问答-agent" aria-label="Permalink to &quot;四、练习：面经检索问答 Agent&quot;">​</a></h2><h3 id="任务" tabindex="-1">任务 <a class="header-anchor" href="#任务" aria-label="Permalink to &quot;任务&quot;">​</a></h3><p>用上面的积木搭一个「面经检索问答」小 Agent：</p><ol><li><strong>检索工具</strong>：内置 8 条以上面经语料（题目加要点答案），实现 <code>search_interview_qa(query, top_k=3)</code>。中文检索可用「字符二元组（bigram）加 IDF」打分，只需标准库。</li><li><strong>安全解析</strong>：复用示例 2 的检查；任何失败都转成文本喂回模型，不让 loop 中断。</li><li><strong>Agent Loop</strong>：复用示例 1 的结构；离线模型用规则模拟，并演示一次「多余参数、错误反馈、自我修正」的完整过程。</li><li><strong>带引用的回答</strong>：最终回答列出命中的面经编号（如 <code>[Q1]</code>）；检索不到时明确说明库中没有。</li></ol><p>验收：问「Python 的 GIL 是什么」时输出工具调用日志、自我修正过程和带编号的回答；问语料外的问题（如「今天天气怎么样」）时输出「没有检索到相关内容」；全程不发起网络请求。</p><h3 id="参考答案" tabindex="-1">参考答案 <a class="header-anchor" href="#参考答案" aria-label="Permalink to &quot;参考答案&quot;">​</a></h3><div class="py-demo"><div class="py-demo-header"><span>Python</span><button class="py-demo-run" type="button">Run</button></div><pre class="language-python"><code>import inspect
+import json
+import math
+import re
+from enum import StrEnum
+
+# 0. 面经语料（教学数据）
+CORPUS = [
+    {&quot;id&quot;: &quot;Q1&quot;, &quot;q&quot;: &quot;Python 的 GIL 是什么？对多线程有什么影响？&quot;,
+     &quot;a&quot;: &quot;GIL 是全局解释器锁，同一时刻只允许一个线程执行 Python 字节码。&quot;
+          &quot;多线程适合 IO 密集场景；CPU 密集要用多进程或 C 扩展。&quot;},
+    {&quot;id&quot;: &quot;Q2&quot;, &quot;q&quot;: &quot;装饰器的实现原理是什么？&quot;,
+     &quot;a&quot;: &quot;装饰器是接收函数、返回函数的高阶函数；@decorator 只是语法糖。&quot;
+          &quot;常见用途：日志、鉴权、重试、缓存。&quot;},
+    {&quot;id&quot;: &quot;Q3&quot;, &quot;q&quot;: &quot;列表去重有哪些方法？&quot;,
+     &quot;a&quot;: &quot;dict.fromkeys 可保序去重；set 去重更快但不保序。&quot;
+          &quot;元素是 dict 时不可哈希，需要先转成元组。&quot;},
+    {&quot;id&quot;: &quot;Q4&quot;, &quot;q&quot;: &quot;with 语句和上下文管理器是干嘛的？&quot;,
+     &quot;a&quot;: &quot;上下文管理器通过 __enter__/__exit__ 管理资源，with 保证退出时释放，&quot;
+          &quot;等价于 try/finally 的语法糖。&quot;},
+    {&quot;id&quot;: &quot;Q5&quot;, &quot;q&quot;: &quot;生成器和迭代器有什么区别？&quot;,
+     &quot;a&quot;: &quot;迭代器实现 __iter__/__next__；生成器是写起来像函数的迭代器，&quot;
+          &quot;用 yield 暂停/恢复，惰性求值省内存。&quot;},
+    {&quot;id&quot;: &quot;Q6&quot;, &quot;q&quot;: &quot;浅拷贝和深拷贝的区别？&quot;,
+     &quot;a&quot;: &quot;浅拷贝只复制顶层容器，内层对象共享；深拷贝递归复制整个对象图，&quot;
+          &quot;用 copy.deepcopy。&quot;},
+    {&quot;id&quot;: &quot;Q7&quot;, &quot;q&quot;: &quot;*args 和 **kwargs 是什么？&quot;,
+     &quot;a&quot;: &quot;*args 收集多余位置参数为元组，**kwargs 收集多余关键字参数为 dict；&quot;
+          &quot;常用于透传参数和装饰器。&quot;},
+    {&quot;id&quot;: &quot;Q8&quot;, &quot;q&quot;: &quot;lambda 表达式有什么限制？&quot;,
+     &quot;a&quot;: &quot;lambda 只能写单个表达式，不能包含语句；复杂逻辑应改用 def，&quot;
+          &quot;可读性优先。&quot;},
+]
+
+# 1. 检索：中文二元组（bigram）+ IDF 打分，纯标准库
+_TOKEN = re.compile(r&quot;\\w+&quot;, re.UNICODE)
+
+
+def bigrams(text):
+    text = &quot;&quot;.join(_TOKEN.findall(text))
+    return [text[i:i + 2] for i in range(len(text) - 1)] or ([text] if text else [])
+
+
+def build_index(corpus):
+    &quot;&quot;&quot;计算每个 bigram 的 IDF：出现在越少文档里的词越关键。&quot;&quot;&quot;
+    df = {}
+    for doc in corpus:
+        for gram in set(bigrams(doc[&quot;q&quot;] + doc[&quot;a&quot;])):
+            df[gram] = df.get(gram, 0) + 1
+    n = len(corpus)
+    return {g: math.log((n + 1) / (c + 1)) + 1.0 for g, c in df.items()}
+
+
+IDF = build_index(CORPUS)
+
+
+def search_interview_qa(query, top_k=3):
+    q_grams = bigrams(query)
+    scored = []
+    for doc in CORPUS:
+        text = doc[&quot;q&quot;] + doc[&quot;a&quot;]
+        score = sum(IDF.get(g, 0.0) for g in q_grams if g in text)
+        scored.append((score, doc))
+    scored.sort(key=lambda item: (-item[0], item[1][&quot;id&quot;]))
+    return [{&quot;id&quot;: d[&quot;id&quot;], &quot;q&quot;: d[&quot;q&quot;], &quot;a&quot;: d[&quot;a&quot;], &quot;score&quot;: round(s, 3)}
+            for s, d in scored[:top_k] if s &gt; 0]
+
+
+# 2. 工具名用 StrEnum：成员本身就是 str，可直接当字符串查表
+class ToolName(StrEnum):
+    SEARCH_INTERVIEW_QA = &quot;search_interview_qa&quot;
+
+
+TOOL_IMPL = {ToolName.SEARCH_INTERVIEW_QA: search_interview_qa}
+MAX_ARGS_BYTES = 4096
+
+
+class ToolArgumentError(ValueError):
+    pass
+
+
+def call_tool(call):
+    &quot;&quot;&quot;执行单个 tool_call；参数问题统一抛 ToolArgumentError。&quot;&quot;&quot;
+    fn = TOOL_IMPL[call[&quot;function&quot;][&quot;name&quot;]]
+    raw = call[&quot;function&quot;][&quot;arguments&quot;]
+    if len(raw.encode(&quot;utf-8&quot;)) &gt; MAX_ARGS_BYTES:
+        raise ToolArgumentError(&quot;arguments 超过长度上限&quot;)
+    try:
+        args = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ToolArgumentError(f&quot;不是合法 JSON：{exc}&quot;) from exc
+    if not isinstance(args, dict):
+        raise ToolArgumentError(&quot;arguments 顶层必须是 JSON object&quot;)
+    try:
+        inspect.signature(fn).bind(**args)
+    except TypeError as exc:
+        raise ToolArgumentError(f&quot;参数与函数签名不匹配：{exc}&quot;) from exc
+    return json.dumps(fn(**args), ensure_ascii=False)
+
+
+def make_call(call_id, arguments):
+    return {&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: None, &quot;finish_reason&quot;: &quot;tool_calls&quot;,
+            &quot;tool_calls&quot;: [{&quot;id&quot;: call_id, &quot;type&quot;: &quot;function&quot;, &quot;function&quot;: {
+                &quot;name&quot;: &quot;search_interview_qa&quot;,
+                &quot;arguments&quot;: json.dumps(arguments, ensure_ascii=False)}}]}
+
+
+# 3. 离线模型：第一轮故意给出多余参数 k，收到报错后自我修正
+def fake_model(messages):
+    last_user = next(m[&quot;content&quot;] for m in reversed(messages) if m[&quot;role&quot;] == &quot;user&quot;)
+    tool_msgs = [m for m in messages if m[&quot;role&quot;] == &quot;tool&quot;]
+    if not tool_msgs:
+        return make_call(&quot;call_1&quot;, {&quot;query&quot;: last_user, &quot;k&quot;: 3})
+    if &quot;参数与函数签名不匹配&quot; in tool_msgs[-1][&quot;content&quot;]:  # 只看最后一条
+        return make_call(&quot;call_2&quot;, {&quot;query&quot;: last_user, &quot;top_k&quot;: 3})
+    hits = [h for m in tool_msgs if not m[&quot;content&quot;].startswith(&quot;工具调用失败&quot;)
+            for h in json.loads(m[&quot;content&quot;])]
+    if not hits:
+        return {&quot;role&quot;: &quot;assistant&quot;, &quot;finish_reason&quot;: &quot;stop&quot;,
+                &quot;content&quot;: &quot;面经库里没有检索到相关内容，换个关键词试试。&quot;}
+    lines = [f&quot;[{h[&#39;id&#39;]}] {h[&#39;q&#39;]}\\n    {h[&#39;a&#39;]}&quot; for h in hits]
+    return {&quot;role&quot;: &quot;assistant&quot;, &quot;finish_reason&quot;: &quot;stop&quot;,
+            &quot;content&quot;: &quot;参考面经回答：\\n&quot; + &quot;\\n&quot;.join(lines)}
+
+
+# 4. Loop 本体
+def run_agent_loop(question, max_steps=8):
+    messages = [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: question}]
+    for step in range(1, max_steps + 1):
+        print(f&quot;[loop] 第 {step} 轮，累计 {len(messages)} 条消息&quot;)
+        msg = fake_model(messages)
+        messages.append(msg)
+        if msg[&quot;finish_reason&quot;] != &quot;tool_calls&quot;:
+            return msg[&quot;content&quot;]
+        for call in msg[&quot;tool_calls&quot;]:
+            try:
+                content = call_tool(call)
+            except ToolArgumentError as exc:
+                content = f&quot;工具调用失败：{exc}&quot;
+            print(f&quot;[tool] {call[&#39;function&#39;][&#39;arguments&#39;]}&quot;)
+            print(f&quot;[tool] -&gt; {content[:60]}{&#39;…&#39; if len(content) &gt; 60 else &#39;&#39;}&quot;)
+            messages.append({&quot;role&quot;: &quot;tool&quot;, &quot;tool_call_id&quot;: call[&quot;id&quot;],
+                             &quot;content&quot;: content})
+    return &quot;（达到 max_steps，强制退出）&quot;
+
+
+print(run_agent_loop(&quot;面经：Python 的 GIL 是什么？对多线程有什么影响？&quot;))
+print(&quot;=&quot; * 20)
+print(run_agent_loop(&quot;今天天气怎么样&quot;))
+</code></pre><div class="py-demo-output">Click Run to see output</div></div><p>预期输出：</p><div class="language-text vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">text</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>[loop] 第 1 轮，累计 1 条消息</span></span>
+<span class="line"><span>[tool] {&quot;query&quot;: &quot;面经：Python 的 GIL 是什么？对多线程有什么影响？&quot;, &quot;k&quot;: 3}</span></span>
+<span class="line"><span>[tool] -&gt; 工具调用失败：参数与函数签名不匹配：got an unexpected keyword argument &#39;k&#39;</span></span>
+<span class="line"><span>[loop] 第 2 轮，累计 3 条消息</span></span>
+<span class="line"><span>[tool] {&quot;query&quot;: &quot;面经：Python 的 GIL 是什么？对多线程有什么影响？&quot;, &quot;top_k&quot;: 3}</span></span>
+<span class="line"><span>[tool] -&gt; [{&quot;id&quot;: &quot;Q1&quot;, &quot;q&quot;: &quot;Python 的 GIL 是什么？对多线程有什么影响？&quot;, &quot;a&quot;: &quot;GIL …</span></span>
+<span class="line"><span>[loop] 第 3 轮，累计 5 条消息</span></span>
+<span class="line"><span>参考面经回答：</span></span>
+<span class="line"><span>[Q1] Python 的 GIL 是什么？对多线程有什么影响？</span></span>
+<span class="line"><span>    GIL 是全局解释器锁，同一时刻只允许一个线程执行 Python 字节码。多线程适合 IO 密集场景；CPU 密集要用多进程或 C 扩展。</span></span>
+<span class="line"><span>[Q2] 装饰器的实现原理是什么？</span></span>
+<span class="line"><span>    装饰器是接收函数、返回函数的高阶函数；@decorator 只是语法糖。常见用途：日志、鉴权、重试、缓存。</span></span>
+<span class="line"><span>[Q5] 生成器和迭代器有什么区别？</span></span>
+<span class="line"><span>    迭代器实现 __iter__/__next__；生成器是写起来像函数的迭代器，用 yield 暂停/恢复，惰性求值省内存。</span></span>
+<span class="line"><span>====================</span></span>
+<span class="line"><span>[loop] 第 1 轮，累计 1 条消息</span></span>
+<span class="line"><span>[tool] {&quot;query&quot;: &quot;今天天气怎么样&quot;, &quot;k&quot;: 3}</span></span>
+<span class="line"><span>[tool] -&gt; 工具调用失败：参数与函数签名不匹配：got an unexpected keyword argument &#39;k&#39;</span></span>
+<span class="line"><span>[loop] 第 2 轮，累计 3 条消息</span></span>
+<span class="line"><span>[tool] {&quot;query&quot;: &quot;今天天气怎么样&quot;, &quot;top_k&quot;: 3}</span></span>
+<span class="line"><span>[tool] -&gt; []</span></span>
+<span class="line"><span>[loop] 第 3 轮，累计 5 条消息</span></span>
+<span class="line"><span>面经库里没有检索到相关内容，换个关键词试试。</span></span></code></pre></div><p>关于自我修正的判断条件：<code>fake_model</code> 只检查<strong>最后一条</strong> <code>tool</code> 消息。若写成「历史中出现过错误就重试」，错误信息会一直留在 <code>messages</code> 中，模型将反复重试同一个工具；真实模型搭配脆弱规则时也会出现这种情况，<code>max_steps</code> 是最后的保险。</p><hr><h2 id="五、面试常问的三个追问" tabindex="-1">五、面试常问的三个追问 <a class="header-anchor" href="#五、面试常问的三个追问" aria-label="Permalink to &quot;五、面试常问的三个追问&quot;">​</a></h2><h3 id="追问-1-为什么-agent-loop-用循环而不是递归" tabindex="-1">追问 1：为什么 Agent Loop 用循环而不是递归？ <a class="header-anchor" href="#追问-1-为什么-agent-loop-用循环而不是递归" aria-label="Permalink to &quot;追问 1：为什么 Agent Loop 用循环而不是递归？&quot;">​</a></h3><p>循环的状态就是 <code>messages</code> 列表本身，「直到模型不再请求工具」天然是循环的终止条件。每一轮做三件事：发送全量历史，有 <code>tool_calls</code> 就执行并回填，否则结束。递归写法要把消息列表逐层传递，而 Python 解释器栈有最大深度上限（<code>sys.getrecursionlimit()</code> 返回该上限），对话变深时会触达限制。工程上再加两层保护：<code>max_steps</code> 兜底，以及检测「同一工具加同一参数」的重复调用。</p><h3 id="追问-2-模型返回的-arguments-是字符串-直接-json-loads-就够了吗" tabindex="-1">追问 2：模型返回的 arguments 是字符串，直接 json.loads 就够了吗？ <a class="header-anchor" href="#追问-2-模型返回的-arguments-是字符串-直接-json-loads-就够了吗" aria-label="Permalink to &quot;追问 2：模型返回的 arguments 是字符串，直接 json.loads 就够了吗？&quot;">​</a></h3><p>不够。官方文档说明 <code>arguments</code> 可能不是合法 JSON，也可能包含 schema 中没有的参数，需要调用前自行校验。生产做法是依次执行：限制长度、<code>json.loads</code> 并处理 <code>JSONDecodeError</code>、校验顶层是 object、用 <code>inspect.Signature.bind</code> 校验参数名与形态，必要时再补类型检查。校验失败时不要把异常抛出 loop，而是把原因作为 <code>tool</code> 消息喂回模型。另外，schema 中的 <code>required</code> 只是给模型的提示，不是运行时保证。</p><h3 id="追问-3-一次返回多个-tool-call-并发还是串行" tabindex="-1">追问 3：一次返回多个 tool_call，并发还是串行？ <a class="header-anchor" href="#追问-3-一次返回多个-tool-call-并发还是串行" aria-label="Permalink to &quot;追问 3：一次返回多个 tool_call，并发还是串行？&quot;">​</a></h3><p>协议不规定顺序，选择权在调用方。无依赖的工具并发执行：<code>asyncio.TaskGroup</code> 加 <code>asyncio.timeout</code> 提供结构化并发和总预算；阻塞的同步工具用 <code>asyncio.to_thread</code> 放入线程。并发之前先确认两点：<strong>依赖</strong>（后一个工具的入参来自前一个的结果时只能串行）和<strong>副作用</strong>（并发会放大对下游的写入压力，非幂等操作应串行或加锁）。迁移时不要把 <code>TaskGroup</code> 当 <code>Promise.all</code>：前者在首个异常时取消其余任务。</p><hr><h2 id="六、参考资料" tabindex="-1">六、参考资料 <a class="header-anchor" href="#六、参考资料" aria-label="Permalink to &quot;六、参考资料&quot;">​</a></h2><table tabindex="0"><thead><tr><th>来源</th><th>覆盖内容</th></tr></thead><tbody><tr><td><a href="https://docs.python.org/3.12/" target="_blank" rel="noreferrer">Python 3.12 官方文档</a></td><td>json、asyncio、subprocess、inspect、urllib、真值检测等标准库与语言行为</td></tr><tr><td><a href="https://api-docs.deepseek.com/" target="_blank" rel="noreferrer">DeepSeek API 文档</a></td><td><code>messages</code>、<code>tools</code>、<code>tool_calls</code>、<code>tool</code> 消息、<code>finish_reason</code>、<code>tool_choice</code>、<code>arguments</code> 校验要求（OpenAI 兼容协议）</td></tr><tr><td><a href="https://developer.mozilla.org/" target="_blank" rel="noreferrer">MDN Web Docs</a></td><td>JS 侧 Falsy、<code>JSON.parse</code>、<code>JSON.stringify</code> 等行为</td></tr><tr><td><a href="https://nodejs.org/docs/latest/api/child_process.html" target="_blank" rel="noreferrer">Node.js child_process</a></td><td><code>exec</code> 与 <code>execFile</code> 的 shell 语义</td></tr></tbody></table><p><strong>未覆盖</strong>：OpenAI 与 Anthropic 官方文档在原交付物写作环境中未能抓取，本页不对其 tool-use 协议细节下结论；若需对照，请另行补充。</p>`,68)])])}const h=n(e,[["render",u]]);export{d as __pageData,h as default};
