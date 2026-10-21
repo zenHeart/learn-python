@@ -19,7 +19,7 @@
 | 字典顺序 | 3.7 起语言规范保证插入顺序 | `for-in` 先按数值升序遍历整数索引键，再按创建顺序遍历字符串键 |
 | 模板字符串 | `f"{name}"`（PEP 498，3.6 起） | `` `${name}` `` |
 | 自文档化 | `f"{name=}"`（3.8 新增 `=` 指定符） | 无 |
-| 同种引号嵌套 | `f"{\"a\" + \"b\"}"` 写法在 3.12 起可用（PEP 701） | — |
+| 同种引号嵌套 | 表达式部分可复用与外层相同的引号（PEP 701，3.12 起；3.11 及以前是 `SyntaxError`），见示例 3 | — |
 | bytes 格式化 | 没有 `.format()`，也没有 f-string；3.5 起支持 `%`（PEP 461） | — |
 
 ---
@@ -108,18 +108,19 @@ const { x, y, ...restObj } = { x: 1, y: 2, z: 3, extra: 99 };
 import datetime
 
 name, age = "fred", 50
-print(f"My name is {name}, my age next year is {age + 1}.")      # 3.6
-print(f"{name=}, {datetime.date(1975, 7, 31)=}")                  # 3.8
-print(f"{"a" + "b"}")                                              # 3.12 起
-print(b"x=%i y=%f" % (1, 2.5))                                    # bytes 用 %，3.5 起
-print(hasattr(b"x", "format"))                                    # False
+member_since = datetime.date(1975, 7, 31)
+print(f"My name is {name}, my age next year is {age + 1}.")   # 3.6
+print(f"{name=}, {member_since=}")                            # 3.8
+print(f"{"a" + "b"}")                                         # 3.12 起
+print(b"x=%i y=%f" % (1, 2.5))                                # bytes 用 %，3.5 起
+print(hasattr(b"x", "format"))                                # False
 ```
 
 输出（Python 3.12）：
 
 ```text
 My name is fred, my age next year is 51.
-name='fred', datetime.date(1975, 7, 31)=datetime.date(1975, 7, 31)
+name='fred', member_since=datetime.date(1975, 7, 31)
 ab
 b'x=1 y=2.500000'
 False
