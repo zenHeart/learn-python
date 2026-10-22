@@ -58,7 +58,8 @@ module.exports = {
           { text: '❓ 知识盲点', link: '/tutorial/gaps' },
           { text: '📐 拆包语法完全指南', link: '/tutorial/unpack' },
           { text: '🔀 语法差异速通（对照 JS）', link: '/tutorial/js-syntax-diff' },
-          { text: '🤖 手写 Agent Loop 与工具调用', link: '/tutorial/agent-loop' }
+          { text: '🤖 手写 Agent Loop 与工具调用', link: '/tutorial/agent-loop' },
+          { text: '📊 评测脚本：评测集、命中率与回归门禁', link: '/tutorial/eval-regression-gate' }
         ]
       }
     ]
