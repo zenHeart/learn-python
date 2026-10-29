@@ -40,7 +40,7 @@
     "tenant": "platform"
   },
   {
-    "query": "超时后能不能直接重试",
+    "query": "外部状态",
     "relevant": [
       "d6"
     ],
@@ -48,7 +48,7 @@
     "tenant": "platform"
   },
   {
-    "query": "超时后能不能直接重试",
+    "query": "外部状态",
     "relevant": [
       "d6"
     ],
