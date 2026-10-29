@@ -20,11 +20,11 @@ agent_runtime.py 只接受结构化 ToolCall：
 - id 必须存在，工具结果必须回填同一个 tool_call_id；
 - 工具名称和参数必须通过 ToolRegistry，未知工具或非对象参数直接失败；
 - max_steps 防止模型无限循环；
-- 写工具可以声明 requires_approval，未批准时不会执行 handler；
+- 写工具必须同时声明 read_only=false 和 requires_approval=true；注册时拒绝绕过审批的副作用工具，未批准时不会执行 handler；
 - 相同 idempotency_key 只执行一次，后续请求返回 replayed=true；
 - 工具超过 deadline 会返回 timeout 并停止当前运行；
 - failed、timeout、approval_required 都是停机状态，不能被模型自述覆盖；
-- 真实服务仍需用可取消的下游 context，当前线程池仅用于教学中的确定性超时模拟。
+- timeout 后线程池不会等待 handler；真实服务必须使用可取消的下游 context、幂等键和 durable state，线程取消不等于副作用已取消。
 
 ## 证据边界
 
