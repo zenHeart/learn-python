@@ -1,6 +1,6 @@
 # 知识库 Agent：从 Python 到真实业务系统
 
-本案例以 Python 语法、数据契约、检索、工具调用、权限、评测和恢复构成终局验收合同。当前仓库的 [教学 fixture](https://github.com/zenHeart/learn-python/tree/master/examples/knowledge_base_agent) 只实现离线词元检索、ACL、文档 ID/版本引用、拒答与评测门禁；工具循环、MCP、模型调用和恢复仍是待完成的练习，整案保持 `verification: not-run`。
+本案例以 Python 语法、数据契约、检索、工具调用、权限、评测和恢复构成终局验收合同。当前仓库的 [教学 fixture](https://github.com/zenHeart/learn-python/tree/master/examples/knowledge_base_agent) 已实现离线词元检索、ACL、文档 ID/版本引用、拒答、typed tool Agent Loop、审批门、幂等重放、超时停止和评测门禁；真实模型、MCP、持久化和网络服务仍是后续迁移练习，整案保持 `verification: not-run`。
 
 ## 终局任务
 
@@ -67,4 +67,4 @@ Agent Loop
 - 回归报告异常分类；
 - 需要人工确认的高影响动作。
 
-知识库 Agent 的成功标准是“能提供可核验依据并安全停止”，不是“总能给出答案”。
+知识库 Agent 的成功标准是“能提供可核验依据并安全停止”，不是“总能给出答案”。工具循环必须在审批、超时、失败和最大步数边界停机，不能由模型文本伪造完成状态。
