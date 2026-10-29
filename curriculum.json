@@ -138,6 +138,11 @@
       "id": "llm-model-bridge",
       "title": "LLM 原理桥接",
       "outcome": "能将 Python 与张量、自动微分、Attention、Transformer 的最小实现连接起来（转入 learn-llm）"
+    },
+    {
+      "id": "pi-agent-runtime",
+      "title": "Pi Agent Runtime 定制化",
+      "outcome": "能围绕 Context、Skill、Tool、Hook/Policy、Eval 和回滚定制一个可复用 Agent Runtime，并通过版本、权限和回归证据证明行为"
     }
   ],
   "sources": [
@@ -196,6 +201,13 @@
       "locator": "Python, FastAPI, RAG, tool calling, evaluation, Docker and cloud",
       "accessed_at": "2026-10-30",
       "scope": "岗位能力信号，需结合地区样本复核"
+    },
+    {
+      "id": "careers-agent-contract",
+      "url": "https://github.com/zenHeart/careers/pull/211",
+      "locator": "system-capability-matrix.md and cases/pi-agent-customization.md",
+      "accessed_at": "2026-10-30",
+      "scope": "Agent岗位能力、知识库Agent和Pi Agent定制化项目合同"
     }
   ],
   "roles": [
@@ -221,7 +233,8 @@
             "knowledge-retrieval",
             "agent-state-recovery",
             "agent-evaluation",
-            "agent-delivery"
+            "agent-delivery",
+            "pi-agent-runtime"
           ],
           "source_refs": [
             "career-agent-signal",
@@ -439,6 +452,64 @@
         "fixture_role": "hard-gate",
         "deterministic": true
       }
+    },
+    {
+      "id": "pi-agent-runtime-customization",
+      "owner": "learn-python",
+      "title": "Pi Agent 定制化 Runtime 交付",
+      "kind": "engineering",
+      "task": "实现一个面向知识库与工作流任务的可配置 Agent Runtime：用 Context、Skill、Tool、Hook/Policy 和 Eval 组织行为，并支持版本比较和安全回滚",
+      "constraints": [
+        "Context、Skill、Tool、Hook 必须有清晰输入输出合同",
+        "只读工具和副作用工具分开，副作用默认需要人工确认",
+        "不把 token、会话凭据或个人原始资料写入共享产物",
+        "使用 Golden/BadCase 比较版本行为"
+      ],
+      "deliverables": [
+        "Runtime 配置、至少一个知识库 Skill、至少三个工具 schema、权限/隐私 Hook、Eval Runner、版本对比报告和回滚说明"
+      ],
+      "acceptance": [
+        "新增 Skill 不修改核心 Loop",
+        "工具失败不会被标记为成功",
+        "未批准副作用被拦截",
+        "上下文约束变化可解释",
+        "版本回归能报告新增/消失/退化样本",
+        "中断后可从 checkpoint 恢复"
+      ],
+      "environment": "Python 教学实现可用标准库；运行时适配和真实 Pi 集成可在本机或隔离沙箱完成",
+      "entry": "docs/tutorial/pi-agent-runtime.md",
+      "transfer": "把知识库 Skill 迁移为 workflow 任务执行 Skill，并保持 trace、权限、证据和回滚合同",
+      "delayed_check": "至少一天后从空配置新增一个 Skill，独立补齐工具、Hook 和回归样例",
+      "provenance": "demand-derived",
+      "capability_refs": [
+        "python-core",
+        "python-engineering",
+        "python-data-contracts",
+        "llm-provider-contract",
+        "agent-tool-loop",
+        "agent-state-recovery",
+        "agent-evaluation",
+        "pi-agent-runtime"
+      ],
+      "source_refs": [
+        "careers-agent-contract",
+        "mcp-docs",
+        "learn-llm"
+      ],
+      "prerequisite_refs": [
+        "python-core",
+        "python-engineering",
+        "agent-tool-loop"
+      ],
+      "verification": "not-run",
+      "execution_budget": {
+        "cost_mode": "zero-cost",
+        "active_minutes": 180,
+        "external_calls": [],
+        "network": false,
+        "fixture_role": "hard-gate",
+        "deterministic": true
+      }
     }
   ],
   "terms": [
@@ -507,7 +578,8 @@
         "agent-state-recovery",
         "agent-evaluation",
         "agent-delivery",
-        "llm-model-bridge"
+        "llm-model-bridge",
+        "pi-agent-runtime"
       ]
     }
   ]
