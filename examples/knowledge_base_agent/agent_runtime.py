@@ -60,6 +60,8 @@ class ToolRegistry:
             raise ToolContractError("tool name and callable handler are required")
         if spec.timeout_seconds <= 0:
             raise ToolContractError("tool timeout must be positive")
+        if not spec.read_only and not spec.requires_approval:
+            raise ToolContractError("side-effect tools must require explicit approval")
         if spec.name in self._specs:
             raise ToolContractError(f"duplicate tool: {spec.name}")
         self._specs[spec.name] = spec
