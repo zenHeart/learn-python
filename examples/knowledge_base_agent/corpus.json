@@ -1,26 +1,55 @@
 {
   "d1": {
     "title": "测试环境数据边界",
-    "text": "AI 测试执行只能使用测试环境业务系统数据，禁止连接生产真实数据。"
+    "text": "AI 测试执行只能使用测试环境业务系统数据，禁止连接生产真实数据。",
+    "allowed_roles": [
+      "tester",
+      "reviewer"
+    ],
+    "tenant": "test-bank"
   },
   "d2": {
     "title": "转账规则回归",
-    "text": "转账回归需要校验金额、收款人、限额、短信验证和异常提示，并保存截图和日志证据。"
+    "text": "转账回归需要校验金额、收款人、限额、短信验证和异常提示，并保存截图和日志证据。",
+    "allowed_roles": [
+      "tester",
+      "reviewer"
+    ],
+    "tenant": "test-bank"
   },
   "d3": {
     "title": "Agent 工具安全",
-    "text": "模型只能提出工具调用，工具执行层负责参数校验、权限、超时、幂等和审计。"
+    "text": "模型只能提出工具调用，工具执行层负责参数校验、权限、超时、幂等和审计。",
+    "allowed_roles": [
+      "tester",
+      "reviewer"
+    ],
+    "tenant": "platform"
   },
   "d4": {
     "title": "检索证据",
-    "text": "知识库回答必须引用文档 ID 和版本。没有足够证据时应拒答或请求人工确认。"
+    "text": "知识库回答必须引用文档 ID 和版本。没有足够证据时应拒答或请求人工确认。",
+    "allowed_roles": [
+      "tester",
+      "reviewer"
+    ],
+    "tenant": "platform"
   },
   "d5": {
     "title": "评测门禁",
-    "text": "golden set 用于计算 hit rate、recall@k、MRR、引用覆盖率和版本回归。"
+    "text": "golden set 用于计算 hit rate、recall@k、MRR、引用覆盖率和版本回归。",
+    "allowed_roles": [
+      "tester",
+      "reviewer"
+    ],
+    "tenant": "platform"
   },
   "d6": {
     "title": "异步恢复",
-    "text": "请求超时或响应丢失时，先读取外部状态，再判断是否可以安全重试，不能盲目重复副作用。"
+    "text": "请求超时或响应丢失时，先读取外部状态，再判断是否可以安全重试，不能盲目重复副作用。",
+    "allowed_roles": [
+      "reviewer"
+    ],
+    "tenant": "platform"
   }
 }
