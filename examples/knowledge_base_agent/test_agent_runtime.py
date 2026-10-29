@@ -33,7 +33,7 @@ class AgentRuntimeTests(unittest.TestCase):
 
     def test_idempotency_replays_without_second_side_effect(self):
         calls = []
-        registry = ToolRegistry([ToolSpec("write", lambda args: calls.append(args["value"]) or "written", read_only=False)])
+        registry = ToolRegistry([ToolSpec("write", lambda args: calls.append(args["value"]) or "written", read_only=False, requires_approval=True)])
         state = AgentState("run")
         first = execute_tool(ToolCall("call-1", "write", {"value": "x"}, "key-1"), registry, state, approved=True)
         second = execute_tool(ToolCall("call-2", "write", {"value": "x"}, "key-1"), registry, state, approved=True)
