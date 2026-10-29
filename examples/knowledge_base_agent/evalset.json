@@ -3,36 +3,57 @@
     "query": "测试执行能不能使用生产数据",
     "relevant": [
       "d1"
-    ]
+    ],
+    "role": "tester",
+    "tenant": "test-bank"
   },
   {
     "query": "转账回归需要校验什么",
     "relevant": [
       "d2"
-    ]
+    ],
+    "role": "tester",
+    "tenant": "test-bank"
   },
   {
     "query": "模型如何调用工具",
     "relevant": [
       "d3"
-    ]
+    ],
+    "role": "tester",
+    "tenant": "platform"
   },
   {
     "query": "回答为什么必须有引用",
     "relevant": [
       "d4"
-    ]
+    ],
+    "role": "tester",
+    "tenant": "platform"
   },
   {
     "query": "如何判断检索回归",
     "relevant": [
       "d5"
-    ]
+    ],
+    "role": "tester",
+    "tenant": "platform"
   },
   {
     "query": "超时后能不能直接重试",
     "relevant": [
       "d6"
-    ]
+    ],
+    "role": "reviewer",
+    "tenant": "platform"
+  },
+  {
+    "query": "超时后能不能直接重试",
+    "relevant": [
+      "d6"
+    ],
+    "role": "tester",
+    "tenant": "platform",
+    "expect_status": "refused"
   }
 ]
