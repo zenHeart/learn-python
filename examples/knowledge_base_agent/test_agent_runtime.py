@@ -48,6 +48,10 @@ class AgentRuntimeTests(unittest.TestCase):
         self.assertEqual(result.status, "approval_required")
         self.assertEqual(calls, [])
 
+    def test_side_effect_tool_cannot_skip_approval_declaration(self):
+        with self.assertRaises(ToolContractError):
+            ToolRegistry([ToolSpec("unsafe-write", lambda args: None, read_only=False)])
+
     def test_timeout_stops_before_unbounded_retry(self):
         registry = ToolRegistry([ToolSpec("slow", lambda args: time.sleep(0.2), timeout_seconds=0.01)])
         result = execute_tool(ToolCall("call-1", "slow", {}), registry, AgentState("run"))
