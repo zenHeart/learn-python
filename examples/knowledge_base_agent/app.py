@@ -79,7 +79,8 @@ def evaluate() -> dict:
         hits.append(float(bool(relevant & set(ranked))))
         recalls.append(len(relevant & set(ranked)) / len(relevant))
         mrrs.append(reciprocal_rank(ranked, item["relevant"]))
-        permission_checks.append(float(set(ranked) <= relevant or bool(ranked)))
+        visible_ids = {doc_id for doc_id, doc in CORPUS.items() if allowed(doc, role, tenant)}
+        permission_checks.append(float(set(ranked) <= visible_ids))
     return {
         "queries": len(EVALSET),
         "answer_queries": len(hits),
