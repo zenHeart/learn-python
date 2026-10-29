@@ -1,0 +1,589 @@
+{
+  "local_series": "learn-python",
+  "audience_models": [
+    {
+      "id": "frontend-agent-engineer",
+      "context": "具备 JavaScript/TypeScript、前端工程、HTTP、状态管理或测试经验，希望用 Python 交付 Agent 应用",
+      "prior_models": [
+        "JavaScript 的对象、Promise、async/await、Express/Node 服务"
+      ],
+      "target_model": "Python 的数据模型、类型契约、异步边界、工具执行和 Agent 状态是可测试的后端系统",
+      "misconceptions": [
+        "类型标注等于运行时校验",
+        "模型决定工具执行结果",
+        "向量召回命中就等于回答正确"
+      ],
+      "observable_signals": [
+        "能从空目录启动测试",
+        "能定位工具调用和检索失败",
+        "能解释一次重试是否安全"
+      ],
+      "adaptation": "保留 JS 对照，减少通用 Web 语法，增加 Python 运行时、测试、检索和恢复任务",
+      "status": "sourced",
+      "evidence_refs": [
+        "python-docs",
+        "fastapi-docs",
+        "mcp-docs"
+      ]
+    },
+    {
+      "id": "python-beginner",
+      "context": "高中数学，Python 零基础，需要进入 Python Agent 或后端岗位",
+      "prior_models": [
+        "变量、函数和对象来自其他语言或日常自动化经验"
+      ],
+      "target_model": "能用最小 Python 子集实现、测试和调试一个真实 Agent 组件",
+      "misconceptions": [
+        "先学完整语言才能做项目",
+        "复制示例等于独立掌握"
+      ],
+      "observable_signals": [
+        "能在新起点完成小函数",
+        "能修复故意注入的错误",
+        "能在约束变化后迁移"
+      ],
+      "adaptation": "从最小纵向切片开始，先示范再补全再独立完成，逐步撤除提示",
+      "status": "hypothesized",
+      "evidence_refs": [
+        "python-docs",
+        "pytest-docs"
+      ]
+    },
+    {
+      "id": "bank-test-agent",
+      "context": "测试工程师，为测试环境中的业务系统构建可审计的知识库和工具 Agent",
+      "prior_models": [
+        "测试用例、接口契约、回归报告、异常分类和证据链"
+      ],
+      "target_model": "Agent 只通过白名单工具访问合成或测试环境数据，所有调用、引用、失败和人工确认可追溯",
+      "misconceptions": [
+        "自然语言输入可以直接执行副作用",
+        "知识库有文档就不需要评测",
+        "执行成功等于业务正确"
+      ],
+      "observable_signals": [
+        "能设计权限、幂等、回显和人工确认边界",
+        "能用 golden set 评估检索和回答"
+      ],
+      "adaptation": "使用账户查询、转账规则、回归报告等脱敏场景，不接入生产数据",
+      "status": "sourced",
+      "evidence_refs": [
+        "mcp-docs",
+        "pytest-docs"
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "python-core",
+      "title": "Python 核心语法与数据模型",
+      "outcome": "能在新起点独立写出函数、集合、类、异常处理和模块导入，并解释可变对象、作用域和协议边界"
+    },
+    {
+      "id": "python-engineering",
+      "title": "Python 项目工程与测试底座",
+      "outcome": "能用隔离环境、pyproject、类型标注、pytest、日志和命令行构建可复现的小型项目"
+    },
+    {
+      "id": "python-data-contracts",
+      "title": "数据契约与运行时校验",
+      "outcome": "能用 dataclass/Pydantic 表达请求、工具参数和检索文档，并拒绝非法或越权输入"
+    },
+    {
+      "id": "python-async-http",
+      "title": "异步、HTTP、SSE 与超时恢复",
+      "outcome": "能编写带超时、取消、重试边界和流式响应处理的异步客户端"
+    },
+    {
+      "id": "python-backend-api",
+      "title": "Python 后端 API 服务",
+      "outcome": "能交付包含路由、校验、错误响应、依赖注入和测试的 FastAPI 服务"
+    },
+    {
+      "id": "python-persistence-security",
+      "title": "持久化、权限与副作用边界",
+      "outcome": "能为 Agent 设计数据存储、访问控制、审计字段、幂等键和人工确认点"
+    },
+    {
+      "id": "llm-provider-contract",
+      "title": "LLM API 与结构化输出",
+      "outcome": "能封装模型调用、消息历史、结构化输出、流式分片、错误分类和成本记录"
+    },
+    {
+      "id": "agent-tool-loop",
+      "title": "Tool Calling 与 Agent Loop",
+      "outcome": "能从空文件实现工具注册、参数校验、tool_call_id 对齐、最大步数和安全失败"
+    },
+    {
+      "id": "knowledge-retrieval",
+      "title": "知识库摄取、检索与引用",
+      "outcome": "能完成文档切块、元数据、混合召回、引用回显、拒答和权限过滤"
+    },
+    {
+      "id": "agent-state-recovery",
+      "title": "状态机、重试、恢复与 HITL",
+      "outcome": "能为多步 Agent 建立 checkpoint、幂等恢复、人工审批、超时和未知结果处理"
+    },
+    {
+      "id": "agent-evaluation",
+      "title": "Agent 评测、可观测性与回归",
+      "outcome": "能建立 golden set、recall@k、MRR、任务成功率、成本延迟和版本回归门禁"
+    },
+    {
+      "id": "agent-delivery",
+      "title": "容器化、交付与岗位表达",
+      "outcome": "能用 Docker/CI 交付 Agent 服务，写出架构决策、故障复盘、演示和面试作品"
+    },
+    {
+      "id": "llm-model-bridge",
+      "title": "LLM 原理桥接",
+      "outcome": "能将 Python 与张量、自动微分、Attention、Transformer 的最小实现连接起来（转入 learn-llm）"
+    },
+    {
+      "id": "pi-agent-runtime",
+      "title": "Pi Agent Runtime 定制化",
+      "outcome": "能围绕 Context、Skill、Tool、Hook/Policy、Eval 和回滚定制一个可复用 Agent Runtime，并通过版本、权限和回归证据证明行为"
+    }
+  ],
+  "sources": [
+    {
+      "id": "python-docs",
+      "url": "https://docs.python.org/3/tutorial/",
+      "locator": "Python Tutorial: data structures, modules, classes, errors",
+      "accessed_at": "2026-10-30",
+      "scope": "Python 语言基础和运行时语义"
+    },
+    {
+      "id": "packaging-guide",
+      "url": "https://packaging.python.org/en/latest/tutorials/installing-packages/",
+      "locator": "Installing packages and virtual environments",
+      "accessed_at": "2026-10-30",
+      "scope": "隔离环境和依赖管理"
+    },
+    {
+      "id": "pytest-docs",
+      "url": "https://docs.pytest.org/en/latest/getting-started.html",
+      "locator": "Get Started, assertions, fixtures and exit status",
+      "accessed_at": "2026-10-30",
+      "scope": "测试和可观察验收"
+    },
+    {
+      "id": "fastapi-docs",
+      "url": "https://fastapi.tiangolo.com/tutorial/",
+      "locator": "Tutorial: application, request body, dependencies and testing",
+      "accessed_at": "2026-10-30",
+      "scope": "Python API 服务"
+    },
+    {
+      "id": "pydantic-docs",
+      "url": "https://docs.pydantic.dev/latest/",
+      "locator": "Models and validation",
+      "accessed_at": "2026-10-30",
+      "scope": "外部输入运行时校验"
+    },
+    {
+      "id": "mcp-docs",
+      "url": "https://modelcontextprotocol.io/specification/2025-06-18",
+      "locator": "Architecture, tools and security considerations",
+      "accessed_at": "2026-10-30",
+      "scope": "工具协议和安全边界"
+    },
+    {
+      "id": "learn-llm",
+      "url": "https://github.com/zenHeart/learn-llm",
+      "locator": "docs/chapters/02-python-foundation.md, docs/chapters/13-rag.md, docs/chapters/15-agent-tools.md, docs/chapters/21-eval-safety-cloud.md",
+      "revision": "6cfa538786447b75b778ddbfb3406f388bacf072",
+      "accessed_at": "2026-10-30",
+      "scope": "从 Python 桥接到 LLM/Agent 的跨仓课程"
+    },
+    {
+      "id": "career-agent-signal",
+      "url": "https://careers.capgemini.com/job/New-York-GenAI-Agentic-AI-Developer/1412574133/",
+      "locator": "Python, FastAPI, RAG, tool calling, evaluation, Docker and cloud",
+      "accessed_at": "2026-10-30",
+      "scope": "岗位能力信号，需结合地区样本复核"
+    },
+    {
+      "id": "careers-agent-contract",
+      "url": "https://github.com/zenHeart/careers/pull/211",
+      "locator": "system-capability-matrix.md and cases/pi-agent-customization.md",
+      "accessed_at": "2026-10-30",
+      "scope": "Agent岗位能力、知识库Agent和Pi Agent定制化项目合同"
+    }
+  ],
+  "roles": [
+    {
+      "id": "python-agent-engineer",
+      "title": "Python Agent 应用工程师",
+      "responsibility": "独立交付可测试、可观测、可恢复的 Python Agent 服务，并能解释检索、工具和安全取舍",
+      "task_refs": [
+        "knowledge-base-agent-delivery"
+      ],
+      "requirements": [
+        {
+          "logic": "all",
+          "capability_refs": [
+            "python-core",
+            "python-engineering",
+            "python-data-contracts",
+            "python-async-http",
+            "python-backend-api",
+            "python-persistence-security",
+            "llm-provider-contract",
+            "agent-tool-loop",
+            "knowledge-retrieval",
+            "agent-state-recovery",
+            "agent-evaluation",
+            "agent-delivery",
+            "pi-agent-runtime"
+          ],
+          "source_refs": [
+            "career-agent-signal",
+            "fastapi-docs",
+            "mcp-docs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "python-backend-engineer",
+      "title": "Python 后端工程师",
+      "responsibility": "交付具备测试、数据契约、持久化、并发和部署能力的 Python 服务",
+      "task_refs": [
+        "backend-service-delivery"
+      ],
+      "requirements": [
+        {
+          "logic": "all",
+          "capability_refs": [
+            "python-core",
+            "python-engineering",
+            "python-data-contracts",
+            "python-async-http",
+            "python-backend-api",
+            "python-persistence-security",
+            "agent-delivery"
+          ],
+          "source_refs": [
+            "python-docs",
+            "fastapi-docs",
+            "pytest-docs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "llm-model-bridge",
+      "title": "LLM 原理与模型工程桥接",
+      "responsibility": "在掌握 Python 工程底座后，手写并解释自动微分、Attention、Transformer 和 TinyGPT",
+      "task_refs": [
+        "llm-clean-room-bridge"
+      ],
+      "requirements": [
+        {
+          "logic": "all",
+          "capability_refs": [
+            "python-core",
+            "python-engineering",
+            "llm-model-bridge"
+          ],
+          "source_refs": [
+            "learn-llm"
+          ]
+        }
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "knowledge-base-agent-delivery",
+      "owner": "learn-python",
+      "title": "测试知识库 Agent 端到端交付",
+      "kind": "engineering",
+      "task": "在本地或隔离沙箱中交付一个面向脱敏测试资料的知识库 Agent：摄取 Markdown/JSON，按权限检索，返回带引用的答案，并通过白名单工具生成只读回归摘要",
+      "constraints": [
+        "默认离线运行，使用合成测试资料",
+        "不接入生产数据、不保存真实凭据",
+        "工具必须有 JSON Schema、超时、审计字段和最大步数",
+        "回答无法找到依据时必须拒答或请求人工确认"
+      ],
+      "deliverables": [
+        "examples/knowledge_base_agent/app.py",
+        "examples/knowledge_base_agent/corpus.json",
+        "examples/knowledge_base_agent/evalset.json",
+        "运行说明、指标报告和一次故障复盘",
+        "examples/knowledge_base_agent/test_app.py"
+      ],
+      "acceptance": [
+        "至少 8 条 golden query 可重复评测",
+        "rank 在排序前完成 tenant/role ACL 过滤，越权文档不进入召回结果",
+        "recall@3、MRR、引用覆盖率和 permission_pass_rate 均有记录",
+        "非法工具参数被拒绝",
+        "重复请求不会产生第二次副作用",
+        "工具异常后 Agent 能保留失败证据并安全结束"
+      ],
+      "environment": "Python 3.11+；标准库可运行教学 fixture；真实 embedding/LLM 通过可替换适配器接入",
+      "entry": "docs/tutorial/knowledge-base-agent.md",
+      "transfer": "把测试面经语料迁移为银行测试规则语料，并新增权限过滤和人工审批工具，保持评测门禁不变",
+      "delayed_check": "至少一天后从空目录重建摄取、检索、引用和回归门禁，并解释一次错误重试的安全性",
+      "provenance": "demand-derived",
+      "capability_refs": [
+        "python-core",
+        "python-engineering",
+        "python-data-contracts",
+        "llm-provider-contract",
+        "agent-tool-loop",
+        "knowledge-retrieval",
+        "agent-state-recovery",
+        "agent-evaluation"
+      ],
+      "source_refs": [
+        "mcp-docs",
+        "pytest-docs",
+        "learn-llm"
+      ],
+      "prerequisite_refs": [
+        "python-core",
+        "python-engineering",
+        "python-data-contracts"
+      ],
+      "verification": "not-run",
+      "execution_budget": {
+        "cost_mode": "zero-cost",
+        "active_minutes": 180,
+        "external_calls": [],
+        "network": "disabled; use local synthetic fixtures only",
+        "fixture_role": "hard-gate",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "backend-service-delivery",
+      "owner": "learn-python",
+      "title": "Python API 服务交付",
+      "kind": "engineering",
+      "task": "从空目录实现一个带 Pydantic 请求校验、异步健康检查、结构化错误和测试的 Python API",
+      "constraints": [
+        "先使用标准库 fixture，再迁移到 FastAPI",
+        "所有外部输入必须经过运行时校验",
+        "测试必须覆盖成功、非法输入、超时和重复请求"
+      ],
+      "deliverables": [
+        "API 源码、测试、README、Dockerfile 和 CI 命令"
+      ],
+      "acceptance": [
+        "测试命令可重复运行",
+        "错误响应包含稳定 code 字段",
+        "超时和取消不会泄漏任务",
+        "README 能解释 TypeScript 到 Python 的关键迁移"
+      ],
+      "environment": "Python 3.11+；可选 FastAPI；无外部服务依赖",
+      "entry": "docs/tutorial/backend-foundation.md",
+      "transfer": "将单体 API 的内存存储替换为带幂等键的持久化适配器，保持接口契约不变",
+      "delayed_check": "延迟复测时独立添加一个带校验的新端点并补齐测试",
+      "provenance": "designed",
+      "capability_refs": [
+        "python-core",
+        "python-engineering",
+        "python-data-contracts",
+        "python-async-http",
+        "python-backend-api",
+        "python-persistence-security",
+        "agent-delivery"
+      ],
+      "source_refs": [
+        "fastapi-docs",
+        "pydantic-docs",
+        "pytest-docs"
+      ],
+      "prerequisite_refs": [
+        "python-core",
+        "python-engineering"
+      ],
+      "verification": "not-run",
+      "execution_budget": {
+        "cost_mode": "zero-cost",
+        "active_minutes": 120,
+        "external_calls": [],
+        "network": "disabled; use local synthetic fixtures only",
+        "fixture_role": "teaching-fixture-candidate",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "llm-clean-room-bridge",
+      "owner": "learn-python",
+      "title": "从 Python 工程到 LLM 原理",
+      "kind": "engineering",
+      "task": "完成 NumPy shape、自动微分和 Attention 的最小 clean-room 实现，并迁移到 learn-llm 的对应章节",
+      "constraints": [
+        "先通过 Python 数据模型和测试诊断",
+        "每个模块都要有数值对拍或 shape 断言",
+        "不得把运行现成模型当作手写实现证据"
+      ],
+      "deliverables": [
+        "shape 练习、Value/自动微分练习、Attention 练习、失败修复记录"
+      ],
+      "acceptance": [
+        "能解释输入输出 shape、复杂度和一个故意错误",
+        "有限差分或参考实现对拍通过",
+        "延迟复测可从空接口重建关键函数"
+      ],
+      "environment": "Python 3.11+；CPU 即可；后续进入 learn-llm",
+      "entry": "docs/tutorial/learning-path.md",
+      "transfer": "将字符级示例改造成测试规则或面经语料，并说明哪些抽象保持不变",
+      "delayed_check": "一周后无提示解释 Attention 的 mask、shape 和缓存边界",
+      "provenance": "designed",
+      "capability_refs": [
+        "python-core",
+        "python-engineering",
+        "llm-model-bridge"
+      ],
+      "source_refs": [
+        "learn-llm"
+      ],
+      "prerequisite_refs": [
+        "python-core",
+        "python-engineering"
+      ],
+      "verification": "not-run",
+      "execution_budget": {
+        "cost_mode": "zero-cost",
+        "active_minutes": 180,
+        "external_calls": [],
+        "network": "disabled; use local synthetic fixtures only",
+        "fixture_role": "hard-gate",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "pi-agent-runtime-customization",
+      "owner": "learn-python",
+      "title": "Pi Agent 定制化 Runtime 交付",
+      "kind": "engineering",
+      "task": "实现一个面向知识库与工作流任务的可配置 Agent Runtime：用 Context、Skill、Tool、Hook/Policy 和 Eval 组织行为，并支持版本比较和安全回滚",
+      "constraints": [
+        "Context、Skill、Tool、Hook 必须有清晰输入输出合同",
+        "只读工具和副作用工具分开，副作用默认需要人工确认",
+        "不把 token、会话凭据或个人原始资料写入共享产物",
+        "使用 Golden/BadCase 比较版本行为"
+      ],
+      "deliverables": [
+        "Runtime 配置、至少一个知识库 Skill、至少三个工具 schema、权限/隐私 Hook、Eval Runner、版本对比报告和回滚说明"
+      ],
+      "acceptance": [
+        "新增 Skill 不修改核心 Loop",
+        "工具失败不会被标记为成功",
+        "未批准副作用被拦截",
+        "上下文约束变化可解释",
+        "版本回归能报告新增/消失/退化样本",
+        "中断后可从 checkpoint 恢复"
+      ],
+      "environment": "Python 教学实现可用标准库；运行时适配和真实 Pi 集成可在本机或隔离沙箱完成",
+      "entry": "docs/tutorial/pi-agent-runtime.md",
+      "transfer": "把知识库 Skill 迁移为 workflow 任务执行 Skill，并保持 trace、权限、证据和回滚合同",
+      "delayed_check": "至少一天后从空配置新增一个 Skill，独立补齐工具、Hook 和回归样例",
+      "provenance": "demand-derived",
+      "capability_refs": [
+        "python-core",
+        "python-engineering",
+        "python-data-contracts",
+        "llm-provider-contract",
+        "agent-tool-loop",
+        "agent-state-recovery",
+        "agent-evaluation",
+        "pi-agent-runtime"
+      ],
+      "source_refs": [
+        "careers-agent-contract",
+        "mcp-docs",
+        "learn-llm"
+      ],
+      "prerequisite_refs": [
+        "python-core",
+        "python-engineering",
+        "agent-tool-loop"
+      ],
+      "verification": "not-run",
+      "execution_budget": {
+        "cost_mode": "zero-cost",
+        "active_minutes": 180,
+        "external_calls": [],
+        "network": "disabled; use local synthetic fixtures only",
+        "fixture_role": "hard-gate",
+        "deterministic": true
+      }
+    }
+  ],
+  "terms": [
+    {
+      "id": "tool-call-id",
+      "term": "tool_call_id",
+      "en_term": "tool call id",
+      "chapter": "agent-loop",
+      "label": "协议字段",
+      "definition": "工具结果必须通过 tool_call_id 对齐到原始调用，不能按返回顺序猜测对应关系",
+      "formula_or_mechanism": "assistant tool_calls → tool result(tool_call_id)",
+      "domain_metaphor": "类似测试报告中的 case_id 与执行结果关联",
+      "code_locator": "docs/tutorial/agent-loop.md",
+      "failure_symptom": "并发工具结果错配或模型无法继续",
+      "first_use": "agent-loop",
+      "aliases": [],
+      "avoid_confusions": [
+        "message id",
+        "request id"
+      ],
+      "source_refs": [
+        "mcp-docs"
+      ],
+      "status": "checked"
+    },
+    {
+      "id": "retrieval-evidence",
+      "term": "检索证据",
+      "en_term": "retrieval evidence",
+      "chapter": "knowledge-base-agent",
+      "label": "质量边界",
+      "definition": "回答中可回溯到具体文档片段、版本和权限范围的证据",
+      "formula_or_mechanism": "query → ranked chunks → citation → answer",
+      "domain_metaphor": "类似缺陷报告中的复现步骤和日志证据",
+      "code_locator": "docs/tutorial/retrieval-pipeline.md",
+      "failure_symptom": "回答看似正确但无法核验",
+      "first_use": "retrieval-pipeline",
+      "aliases": [
+        "citation"
+      ],
+      "avoid_confusions": [
+        "模型置信度"
+      ],
+      "source_refs": [
+        "mcp-docs"
+      ],
+      "status": "checked"
+    }
+  ],
+  "series": [
+    {
+      "id": "learn-python",
+      "repository": "https://github.com/zenHeart/learn-python",
+      "revision": "master",
+      "entry": "docs/tutorial/learning-path.md",
+      "capability_refs": [
+        "python-core",
+        "python-engineering",
+        "python-data-contracts",
+        "python-async-http",
+        "python-backend-api",
+        "python-persistence-security",
+        "llm-provider-contract",
+        "agent-tool-loop",
+        "knowledge-retrieval",
+        "agent-state-recovery",
+        "agent-evaluation",
+        "agent-delivery",
+        "llm-model-bridge",
+        "pi-agent-runtime"
+      ]
+    }
+  ]
+}

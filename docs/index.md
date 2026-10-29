@@ -3,52 +3,56 @@ layout: home
 
 hero:
   name: "learn-python"
-  text: "交互式 Python 学习站"
-  tagline: "边学边练，真正掌握 Python 与 Agent 开发能力"
+  text: "从 Python 基础到可交付 Agent"
+  tagline: "以岗位能力、真实知识库场景、故障调试和评测证据组织学习"
   actions:
     - theme: brand
-      text: 开始学习 →
-      link: /tutorial/begin
+      text: 开始诊断 →
+      link: /tutorial/diagnostic
     - theme: alt
-      text: 查看学习路径
-      link: /tutorial/types
+      text: 查看能力路径
+      link: /tutorial/learning-path
 
 features:
-  - icon: 🐍
-    title: 浏览器端运行 Python
-    details: 无需安装任何环境，点击即可运行真实 Python 代码
+  - icon: 🧭
+    title: 能力图谱驱动
+    details: 先定义岗位终局和真实作品，再按表现裁剪路线
 
-  - icon: 📚
-    title: 循序渐进
-    details: 从基础语法到 Agent 开发，15 节课逐步深入
+  - icon: 🧪
+    title: 练习与故障注入
+    details: 每个节点都有独立实现、调试、迁移和延迟复测
 
-  - icon: 💻
-    title: 边学边练
-    details: 每课配套练习，当场验证掌握程度
+  - icon: 🤖
+    title: 真实 Agent 场景
+    details: 从工具调用、知识库检索到权限、恢复和评测门禁
+
+  - icon: 🧰
+    title: 三种执行环境
+    details: 浏览器、隔离沙箱和本地项目分别承担不同验收责任
 ---
 
-## 为什么做这个站？
+## 学习目标
 
-学习 Python 最常见的问题是：**看懂了，但不会写**。
+完成课程后，你应能从空目录交付一个 Python Agent 服务：
 
-这个站的设计目标是让你**学完就能用**——每个概念配套可运行的代码，敲一遍比看十遍印象更深。
+- 用数据模型和运行时校验约束外部输入；
+- 用异步、HTTP、FastAPI 和测试构建后端；
+- 实现 Tool Calling、知识库检索、引用和拒答；
+- 处理超时、重试、幂等、权限和人工确认；
+- 用评测集、trace、成本和延迟判断版本是否回归。
 
-## 学习路径
+## 推荐入口
 
-1. **基础** — Python 语法、数据类型、控制流、函数、类
-2. **进阶** — 异步编程、HTTP 调用、数据处理
-3. **Agent 专项** — Tool Use、Prompt 工程、Chain 编排、Memory 管理
-4. **实战** — 单文件 Agent、多工具编排、自主决策
+1. [先做诊断](./tutorial/diagnostic.md)，不要用自评跳过能力节点；
+2. [阅读能力路径](./tutorial/learning-path.md)，理解主线和可选分支；
+3. [从 Python 后端底座开始](./tutorial/backend-foundation.md)；
+4. [完成知识库 Agent 案例](./tutorial/knowledge-base-agent.md)；
+5. 再根据目标进入 Agent 应用、后端交付或 [LLM 原理课程](https://github.com/zenHeart/learn-llm)。
 
-## 如何使用？
-
-1. 点击「开始学习」进入第一章
-2. 阅读概念和示例代码
-3. 点击蓝色的「▶ 运行」按钮，查看代码执行结果
-4. 修改代码，尝试不同的写法
-
-```python
-# 试试修改下面的代码，然后点击运行
-name = "Python"
-print(f"Hello, {name}! Welcome to learn-python.")
-```
+~~~python
+# 浏览器练习只用于理解纯 Python 机制
+def answer_or_refuse(evidence):
+    if not evidence:
+        return {"status": "refused", "reason": "no evidence"}
+    return {"status": "answered", "citations": evidence}
+~~~

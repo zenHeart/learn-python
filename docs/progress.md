@@ -1,100 +1,43 @@
 # 学习进度
 
-> 边学边练，逐步掌握 Python 与 Agent 开发能力。
+> 本页面记录课程建设状态。学习者掌握状态由 learner events 和验收证据推导，不由本页勾选决定。
 
----
+## 课程资产
 
-## 📊 站点建设
+| 资产 | 状态 |
+| --- | --- |
+| 能力型 curriculum.json | ✅ 已建立 |
+| 前端工程师 / Python 零基础画像 | ✅ 已建立 |
+| Python Agent / 后端岗位路线 | ✅ 已建立 |
+| 知识库 Agent 案例合同 | ✅ 已建立 |
+| 诊断探针与五维掌握规则 | ✅ 已建立 |
+| 浏览器 / 沙箱 / 本地执行模式 | ✅ 已建立 |
+| 标准库知识库 Agent fixture | ✅ 已建立 |
+| 统一 learning-pack 渲染器 | ⏳ 接入 learn 门户 |
+| PDF / EPUB 个性化导出 | ⏳ 接入 book skill |
+| learner-events 持久化与复习队列 | ⏳ 接入 learn runtime |
 
-| 任务 | 状态 |
-|------|------|
-| VitePress + Pyodide 交互引擎 | ✅ 完成 |
-| 浏览器端运行 Python | ✅ 完成 |
-| Hello World 可运行页面 | 🔄 进行中 |
-| 练习验证机制 | ⏳ 待开始 |
-| 部署到 GitHub Pages | ⏳ 待配置 |
+## 能力主线
 
----
+| 阶段 | 关键能力 | 当前入口 |
+| --- | --- | --- |
+| A | Python 核心、数据模型、异常、模块 | [L1](./tutorial/begin.md) |
+| B | 环境、测试、类型、日志、命令行 | [后端底座](./tutorial/backend-foundation.md) |
+| C | async、HTTP、SSE、FastAPI、Pydantic | curriculum.json |
+| D | LLM API、结构化输出、Tool Calling | [Agent Loop](./tutorial/agent-loop.md) |
+| E | 摄取、切块、召回、引用、拒答 | [检索链路](./tutorial/retrieval-pipeline.md) |
+| F | 权限、恢复、HITL、评测、可观测性 | [知识库 Agent](./tutorial/knowledge-base-agent.md) |
+| G | Docker、CI、岗位表达和作品 | curriculum.json |
+| H | 自动微分、Attention、Transformer | [learn-llm](https://github.com/zenHeart/learn-llm) |
 
-## 📚 学习路径
+## 课程验收
 
-### 阶段 1：Python 基础
+每个能力节点都需要分别记录：
 
-| 课 | 内容 | 状态 |
-|----|------|------|
-| L1 | Hello Python — print / 变量 / 注释 | 🔄 进行中 |
-| L2 | 数据类型 — int / str / bool / list | ⏳ 待开始 |
-| L3 | 控制流 — if / for / while | ⏳ 待开始 |
-| L4 | 函数 — def / 参数 / 返回值 | ⏳ 待开始 |
-| L5 | 类 — class / 方法 / 继承 | ⏳ 待开始 |
+- Explain：因果、不变量、边界和反例；
+- Perform：新起点独立完成；
+- Debug：故障注入后的定位和修复；
+- Transfer：改变场景、工具或约束后的迁移；
+- Retain：延迟复测。
 
-### 阶段 2：Python 进阶
-
-| 课 | 内容 | 状态 |
-|----|------|------|
-| L6 | 异步编程 asyncio | ⏳ 待开始 |
-| L7 | HTTP 与 API 调用（httpx） | ⏳ 待开始 |
-| L8 | 数据处理（Pydantic） | ⏳ 待开始 |
-
-### 阶段 3：Agent 专项
-
-| 课 | 内容 | 状态 |
-|----|------|------|
-| L9 | Tool Use / Function Calling | ⏳ 待开始 |
-| L10 | Prompt 工程 | ⏳ 待开始 |
-| L11 | Chain 编排 | ⏳ 待开始 |
-| L12 | Memory 与上下文管理 | ⏳ 待开始 |
-
-### 阶段 4：实战
-
-| 课 | 内容 | 状态 |
-|----|------|------|
-| L13 | 单文件 Agent 示例 | ⏳ 待开始 |
-| L14 | 多工具编排 | ⏳ 待开始 |
-| L15 | 自主决策树 | ⏳ 待开始 |
-
----
-
-## 👨‍🏫 学习记录
-
-_每次学完一课，在此记录学习心得。_
-
-### L1 — Hello Python
-
-```python
-# 第一个 Python 程序
-name = "Python"
-print(f"Hello, {name}!")
-print("Welcome to learn-python!")
-```
-
-> 状态：🔄 进行中
-> 掌握程度：0%
-
----
-
-## 🎯 学习目标
-
-完成本课程后，你将能够：
-
-1. **熟练编写 Python 脚本** — 处理文件、数据、自动化任务
-2. **理解异步编程** — 用 asyncio 构建高性能应用
-3. **掌握 Agent 开发** — 调用 LLM API、编排工具、管理上下文
-4. **独立开发 Agent 应用** — 从需求到实现，全程自主
-
----
-
-## 🔧 技术栈
-
-| 组件 | 技术 |
-|------|------|
-| 站点框架 | VitePress |
-| 交互引擎 | Pyodide（浏览器端 Python 3.11）|
-| 部署 | GitHub Pages |
-| 仓库 | github.com/zenHeart/learn-python |
-
----
-
-## 开始学习 →
-
-[进入第 1 课：Hello Python](/)
+完成页面阅读或浏览器运行只能作为学习活动证据，不能直接改为 mastered。
