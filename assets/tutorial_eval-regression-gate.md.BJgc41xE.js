@@ -1,0 +1,276 @@
+import{_ as a,o as n,c as e,ae as p}from"./chunks/framework.DJK_dC0-.js";const h=JSON.parse('{"title":"评测脚本：评测集、命中率与回归门禁","description":"","frontmatter":{},"headers":[],"relativePath":"tutorial/eval-regression-gate.md","filePath":"tutorial/eval-regression-gate.md"}'),t={name:"tutorial/eval-regression-gate.md"};function l(i,s,o,r,c,d){return n(),e("div",null,[...s[0]||(s[0]=[p(`<h1 id="评测脚本-评测集、命中率与回归门禁" tabindex="-1">评测脚本：评测集、命中率与回归门禁 <a class="header-anchor" href="#评测脚本-评测集、命中率与回归门禁" aria-label="Permalink to &quot;评测脚本：评测集、命中率与回归门禁&quot;">​</a></h1><blockquote><p>面向有 JS/TS 经验、要为检索或问答链路写评测脚本的工程师。示例只用标准库，在 Python 3.11 / 3.12 实测可运行。示例 1–4 与练习依赖本机文件读写与命令行参数，因此用 <code>text</code> 围栏展示，请保存为同名文件后运行。</p></blockquote><hr><h2 id="一、一句话结论" tabindex="-1">一、一句话结论 <a class="header-anchor" href="#一、一句话结论" aria-label="Permalink to &quot;一、一句话结论&quot;">​</a></h2><p>用标准库就能搭起评测流水线：<strong>用 <code>json</code> + <code>dataclass</code> 定义并加载评测集 → 用可替换的打分函数做 top-k 检索 → 用 <code>statistics.fmean</code> 汇总命中率、recall@k、MRR → 与基线比对，不达标就 <code>sys.exit(1)</code> 让 CI 判红。</strong></p><ul><li>评测集定义「什么算对」；</li><li>命中率衡量「对的有没有被捞进 top-k」；</li><li>回归门禁用退出码把「指标下滑」变成一次「失败的构建」。</li></ul><hr><h2 id="二、与-js-ts-的对照" tabindex="-1">二、与 JS/TS 的对照 <a class="header-anchor" href="#二、与-js-ts-的对照" aria-label="Permalink to &quot;二、与 JS/TS 的对照&quot;">​</a></h2><table tabindex="0"><thead><tr><th>关注点</th><th>JS/TS</th><th>Python 标准库</th><th>注意点</th></tr></thead><tbody><tr><td>数据序列化</td><td><code>JSON.parse</code> / <code>JSON.stringify</code></td><td><code>json.loads</code> / <code>json.dumps</code>；文件对象用 <code>json.load</code> / <code>json.dump</code></td><td>坏 JSON 抛 <code>json.JSONDecodeError</code></td></tr><tr><td>记录 / 结构体</td><td><code>interface</code> + <code>class</code>（类型运行时擦除）</td><td><code>@dataclass</code>，字段用类型注解声明</td><td>自动生成 <code>__init__</code>、<code>__repr__</code></td></tr><tr><td>可变默认字段</td><td>类字段默认 <code>[]</code> 易共享</td><td><code>field(default_factory=list)</code></td><td>直接写 <code>= []</code> 会被 dataclass 拒绝</td></tr><tr><td>求平均</td><td><code>reduce</code> 后除以长度</td><td><code>statistics.fmean(vals)</code></td><td>总是返回 float；空数据抛 <code>StatisticsError</code></td></tr><tr><td>命令行参数</td><td><code>process.argv</code> / <code>commander</code></td><td><code>argparse</code>（<code>type=</code>、<code>default=</code>，自动生成 help）</td><td>参数由 <code>argparse</code> 从 <code>sys.argv</code> 解析</td></tr><tr><td>文件路径</td><td><code>path.join</code> + <code>fs.readFileSync</code></td><td><code>pathlib.Path</code> + <code>read_text()</code></td><td>跨平台路径语义</td></tr><tr><td>进程退出码</td><td><code>process.exit(1)</code></td><td><code>sys.exit(1)</code></td><td><code>0</code> 表示成功，非零表示异常退出</td></tr></tbody></table><p>对应官方文档：<a href="https://docs.python.org/3.12/library/dataclasses.html" target="_blank" rel="noreferrer">dataclasses</a>、<a href="https://docs.python.org/3.12/library/statistics.html" target="_blank" rel="noreferrer">statistics</a>、<a href="https://docs.python.org/3.12/library/json.html" target="_blank" rel="noreferrer">json</a>、<a href="https://docs.python.org/3.12/library/argparse.html" target="_blank" rel="noreferrer">argparse</a>、<a href="https://docs.python.org/3.12/library/pathlib.html" target="_blank" rel="noreferrer">pathlib</a>、<a href="https://docs.python.org/3.12/library/sys.html#sys.exit" target="_blank" rel="noreferrer">sys.exit</a>、<a href="https://peps.python.org/pep-0563/" target="_blank" rel="noreferrer">PEP 563</a>。</p><hr><h2 id="三、四个示例" tabindex="-1">三、四个示例 <a class="header-anchor" href="#三、四个示例" aria-label="Permalink to &quot;三、四个示例&quot;">​</a></h2><p>四个示例各自独立，可直接 <code>python 文件名.py</code> 运行：先有数据，再有检索，再算指标，最后上门禁。</p><h3 id="示例-1-用-dataclass-json-定义并加载评测集-ex1-py" tabindex="-1">示例 1：用 dataclass + json 定义并加载评测集（<code>ex1.py</code>） <a class="header-anchor" href="#示例-1-用-dataclass-json-定义并加载评测集-ex1-py" aria-label="Permalink to &quot;示例 1：用 dataclass + json 定义并加载评测集（\`ex1.py\`）&quot;">​</a></h3><p>评测集就是「问题 → 被认为相关的文档 id」的清单。</p><div class="language-text vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">text</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>from __future__ import annotations</span></span>
+<span class="line"><span>import json</span></span>
+<span class="line"><span>from dataclasses import dataclass, field</span></span>
+<span class="line"><span>from pathlib import Path</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>@dataclass</span></span>
+<span class="line"><span>class Example:</span></span>
+<span class="line"><span>    query: str                       # 用户问题</span></span>
+<span class="line"><span>    relevant: list = field(default_factory=list)  # 相关文档 id 列表</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>def load_examples(path):</span></span>
+<span class="line"><span>    rows = json.loads(Path(path).read_text(encoding=&quot;utf-8&quot;))</span></span>
+<span class="line"><span>    return [Example(r[&quot;query&quot;], list(r[&quot;relevant&quot;])) for r in rows]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 先写一份评测集文件</span></span>
+<span class="line"><span>Path(&quot;eval.json&quot;).write_text(json.dumps([</span></span>
+<span class="line"><span>    {&quot;query&quot;: &quot;字节 前端 React hooks&quot;, &quot;relevant&quot;: [&quot;d1&quot;]},</span></span>
+<span class="line"><span>    {&quot;query&quot;: &quot;MySQL 索引 事务&quot;, &quot;relevant&quot;: [&quot;d4&quot;]},</span></span>
+<span class="line"><span>], ensure_ascii=False), encoding=&quot;utf-8&quot;)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>examples = load_examples(&quot;eval.json&quot;)</span></span>
+<span class="line"><span>print(examples)                       # dataclass 自带 __repr__</span></span>
+<span class="line"><span>print(examples[0].query, examples[0].relevant)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 非法 JSON 会被明确抛出，便于在 CI 里给出可读报错</span></span>
+<span class="line"><span>try:</span></span>
+<span class="line"><span>    json.loads(&quot;{ 坏 JSON&quot;)</span></span>
+<span class="line"><span>except json.JSONDecodeError as exc:</span></span>
+<span class="line"><span>    print(&quot;解析失败：&quot;, exc.msg)</span></span></code></pre></div><p>输出：</p><div class="language-text vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">text</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>[Example(query=&#39;字节 前端 React hooks&#39;, relevant=[&#39;d1&#39;]), Example(query=&#39;MySQL 索引 事务&#39;, relevant=[&#39;d4&#39;])]</span></span>
+<span class="line"><span>字节 前端 React hooks [&#39;d1&#39;]</span></span>
+<span class="line"><span>解析失败： Expecting property name enclosed in double quotes</span></span></code></pre></div><p>要点：<code>relevant</code> 这类可变默认值必须走 <code>field(default_factory=list)</code>；<code>from __future__ import annotations</code> 让注解延迟求值（PEP 563），写法在 3.8 以后一致。</p><h3 id="示例-2-纯标准库-tf-idf-检索器-ex2-py" tabindex="-1">示例 2：纯标准库 TF-IDF 检索器（<code>ex2.py</code>） <a class="header-anchor" href="#示例-2-纯标准库-tf-idf-检索器-ex2-py" aria-label="Permalink to &quot;示例 2：纯标准库 TF-IDF 检索器（\`ex2.py\`）&quot;">​</a></h3><p>把「语料 → 排序 → 取前 k 个 id」封装成一个类。生产环境可把 <code>rank()</code> 换成向量检索，指标与门禁代码不变。</p><div class="language-text vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">text</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>from __future__ import annotations</span></span>
+<span class="line"><span>import re, math</span></span>
+<span class="line"><span>from collections import Counter</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>_ASCII = re.compile(r&quot;[a-z0-9]+&quot;)</span></span>
+<span class="line"><span>_CJK = re.compile(r&quot;[一-鿿]+&quot;)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>def tokenize(text):</span></span>
+<span class="line"><span>    text = text.lower()</span></span>
+<span class="line"><span>    out = list(_ASCII.findall(text))</span></span>
+<span class="line"><span>    for run in _CJK.findall(text):                       # 中文按二元切分</span></span>
+<span class="line"><span>        out.extend([run] if len(run) == 1 else [run[i:i+2] for i in range(len(run)-1)])</span></span>
+<span class="line"><span>    return out</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>class TfidfRetriever:</span></span>
+<span class="line"><span>    def __init__(self, docs):</span></span>
+<span class="line"><span>        self.ids = list(docs)</span></span>
+<span class="line"><span>        self.tf = [Counter(tokenize(docs[i])) for i in self.ids]</span></span>
+<span class="line"><span>        self.df = Counter(t for vec in self.tf for t in vec)</span></span>
+<span class="line"><span>        self.n = len(self.ids)</span></span>
+<span class="line"><span>    def _idf(self, term):</span></span>
+<span class="line"><span>        return math.log((1 + self.n) / (1 + self.df[term])) + 1.0</span></span>
+<span class="line"><span>    def _vec(self, counts):</span></span>
+<span class="line"><span>        v = {t: (1 + math.log(c)) * self._idf(t) for t, c in counts.items()}</span></span>
+<span class="line"><span>        norm = math.sqrt(sum(x*x for x in v.values())) or 1.0</span></span>
+<span class="line"><span>        return {t: x / norm for t, x in v.items()}</span></span>
+<span class="line"><span>    def rank(self, query, k):</span></span>
+<span class="line"><span>        qv = self._vec(Counter(tokenize(query)))</span></span>
+<span class="line"><span>        scored = sorted(</span></span>
+<span class="line"><span>            ((sum(qv[t] * self._vec(c).get(t, 0.0) for t in qv), i)</span></span>
+<span class="line"><span>             for i, c in zip(self.ids, self.tf)),</span></span>
+<span class="line"><span>            key=lambda x: (-x[0], x[1]))</span></span>
+<span class="line"><span>        return [i for _, i in scored[:k]]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>corpus = {</span></span>
+<span class="line"><span>    &quot;d1&quot;: &quot;字节跳动 前端 二面 问了 React hooks 原理和虚拟 DOM diff&quot;,</span></span>
+<span class="line"><span>    &quot;d2&quot;: &quot;腾讯 后端 一面 Golang 协程调度和垃圾回收&quot;,</span></span>
+<span class="line"><span>    &quot;d3&quot;: &quot;阿里巴巴 前端 一面 CSS 盒模型 和 事件循环&quot;,</span></span>
+<span class="line"><span>    &quot;d4&quot;: &quot;美团 后端 二面 MySQL 索引和事务隔离级别&quot;,</span></span>
+<span class="line"><span>    &quot;d5&quot;: &quot;字节跳动 前端 三面 系统设计 短链服务&quot;,</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span>r = TfidfRetriever(corpus)</span></span>
+<span class="line"><span>print(r.rank(&quot;字节 前端 React hooks&quot;, 3))   # [&#39;d1&#39;, &#39;d5&#39;, &#39;d3&#39;]</span></span>
+<span class="line"><span>print(r.rank(&quot;MySQL 索引 事务&quot;, 3))          # [&#39;d4&#39;, &#39;d1&#39;, &#39;d2&#39;]</span></span></code></pre></div><p>输出：</p><div class="language-text vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">text</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>[&#39;d1&#39;, &#39;d5&#39;, &#39;d3&#39;]</span></span>
+<span class="line"><span>[&#39;d4&#39;, &#39;d1&#39;, &#39;d2&#39;]</span></span></code></pre></div><h3 id="示例-3-命中率、recall-k、mrr-ex3-py" tabindex="-1">示例 3：命中率、recall@k、MRR（<code>ex3.py</code>） <a class="header-anchor" href="#示例-3-命中率、recall-k、mrr-ex3-py" aria-label="Permalink to &quot;示例 3：命中率、recall@k、MRR（\`ex3.py\`）&quot;">​</a></h3><p>用固定排序的假检索器，把注意力集中在指标计算上。</p><div class="language-text vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">text</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>from statistics import fmean</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>def reciprocal_rank(ranked, relevant):</span></span>
+<span class="line"><span>    rel = set(relevant)</span></span>
+<span class="line"><span>    for pos, doc_id in enumerate(ranked, start=1):</span></span>
+<span class="line"><span>        if doc_id in rel:</span></span>
+<span class="line"><span>            return 1.0 / pos</span></span>
+<span class="line"><span>    return 0.0</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 演示用的假排序（真实排序见示例 2 / 小项目）</span></span>
+<span class="line"><span>def fake_rank(query, k):</span></span>
+<span class="line"><span>    return [&quot;d3&quot;, &quot;d4&quot;, &quot;d1&quot;, &quot;d2&quot;, &quot;d5&quot;][:k]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>examples = [</span></span>
+<span class="line"><span>    (&quot;字节 前端 React hooks&quot;, [&quot;d1&quot;]),  # 相关文档排在第 3 位</span></span>
+<span class="line"><span>    (&quot;MySQL 索引 事务&quot;, [&quot;d4&quot;]),         # 相关文档排在第 2 位</span></span>
+<span class="line"><span>    (&quot;短链 系统设计&quot;, [&quot;d9&quot;]),           # top-k 内没有相关文档</span></span>
+<span class="line"><span>]</span></span>
+<span class="line"><span>hits, recalls, rrs = [], [], []</span></span>
+<span class="line"><span>for query, relevant in examples:</span></span>
+<span class="line"><span>    ranked = fake_rank(query, 3)</span></span>
+<span class="line"><span>    rel = set(relevant)</span></span>
+<span class="line"><span>    hits.append(1.0 if rel &amp; set(ranked) else 0.0)      # 命中率单条值：在不在 top-k</span></span>
+<span class="line"><span>    recalls.append(len(rel &amp; set(ranked)) / len(rel))   # recall@k 单条值</span></span>
+<span class="line"><span>    rrs.append(reciprocal_rank(ranked, relevant))       # MRR 单条值：排得多前</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>print(&quot;hit_rate&quot;, round(fmean(hits), 3))     # 0.667：3 条里 2 条命中</span></span>
+<span class="line"><span>print(&quot;recall@3&quot;, round(fmean(recalls), 3))  # 0.667</span></span>
+<span class="line"><span>print(&quot;mrr&quot;, round(fmean(rrs), 3))           # (1/3 + 1/2 + 0)/3 = 0.278：体现排序质量</span></span></code></pre></div><p>输出：</p><div class="language-text vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">text</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>hit_rate 0.667</span></span>
+<span class="line"><span>recall@3 0.667</span></span>
+<span class="line"><span>mrr 0.278</span></span></code></pre></div><p>指标定义（信息检索的通用定义）：</p><ul><li><strong>命中率 Hit Rate@K</strong>：top-k 中是否出现任一相关文档（二值），按查询聚合为「至少命中一次的问题占比」。</li><li><strong>Recall@K</strong> = top-K 中的相关文档数 / 相关文档总数，越低说明漏检越多。</li><li><strong>Precision@K</strong> = top-K 中的相关文档数 / K，用来观察噪声；与 Recall 此消彼长，调整 <code>k</code> 就是在两者间取舍。</li><li><strong>MRR</strong> = 各查询「首个相关文档排名的倒数」的平均值：第 1 位 1.0、第 2 位 0.5、第 3 位 0.33……</li></ul><p>本例三条查询各只有一个相关文档，所以 <code>hit_rate == recall@3 == 0.667</code>，而 <code>mrr = 0.278</code>：命中率只问「在不在」，MRR 还问「排多前」。</p><blockquote><p>参考（非官方）：<a href="https://github.com/letuhao/lore-weave/blob/main/docs/05_qa/rag_quality_metrics.md" target="_blank" rel="noreferrer">RAG Quality Metrics Reference</a> 对上述指标的整理；正式引用请以信息检索教材或所用评测框架的文档为准。</p></blockquote><h3 id="示例-4-回归门禁-ex4-py" tabindex="-1">示例 4：回归门禁（<code>ex4.py</code>） <a class="header-anchor" href="#示例-4-回归门禁-ex4-py" aria-label="Permalink to &quot;示例 4：回归门禁（\`ex4.py\`）&quot;">​</a></h3><p>门禁 =「当前指标 vs 基线」+ 退出码。</p><div class="language-text vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">text</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>import argparse, sys</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>def gate(current, baseline, min_hit, tol):</span></span>
+<span class="line"><span>    ok = True</span></span>
+<span class="line"><span>    if current[&quot;hit_rate&quot;] &lt; min_hit:</span></span>
+<span class="line"><span>        print(f&quot;[FAIL] hit_rate {current[&#39;hit_rate&#39;]:.3f} &lt; 下限 {min_hit}&quot;)</span></span>
+<span class="line"><span>        ok = False</span></span>
+<span class="line"><span>    if current[&quot;hit_rate&quot;] &lt; baseline[&quot;hit_rate&quot;] - tol:</span></span>
+<span class="line"><span>        print(f&quot;[FAIL] hit_rate 低于基线 {baseline[&#39;hit_rate&#39;]:.3f} - 容差 {tol}&quot;)</span></span>
+<span class="line"><span>        ok = False</span></span>
+<span class="line"><span>    if ok:</span></span>
+<span class="line"><span>        print(&quot;[OK] 无回归&quot;)</span></span>
+<span class="line"><span>    return ok</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>def main(argv=None):</span></span>
+<span class="line"><span>    p = argparse.ArgumentParser(description=&quot;回归门禁演示&quot;)</span></span>
+<span class="line"><span>    p.add_argument(&quot;--min-hit&quot;, type=float, default=0.8, help=&quot;命中率下限&quot;)</span></span>
+<span class="line"><span>    p.add_argument(&quot;--tol&quot;, type=float, default=0.05, help=&quot;相对基线允许的跌幅&quot;)</span></span>
+<span class="line"><span>    args = p.parse_args(argv)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    baseline = {&quot;hit_rate&quot;: 0.95}   # 上一次验收的指标</span></span>
+<span class="line"><span>    current = {&quot;hit_rate&quot;: 0.90}    # 本次评测算出（演示用固定值）</span></span>
+<span class="line"><span>    return 0 if gate(current, baseline, args.min_hit, args.tol) else 1</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>if __name__ == &quot;__main__&quot;:</span></span>
+<span class="line"><span>    sys.exit(main())</span></span></code></pre></div><p>运行：</p><div class="language-text vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">text</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>$ python ex4.py                 # 默认下限 0.8：通过</span></span>
+<span class="line"><span>[OK] 无回归                     # 退出码 0</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>$ python ex4.py --min-hit 0.95  # 下限抬到 0.95：不达标</span></span>
+<span class="line"><span>[FAIL] hit_rate 0.900 &lt; 下限 0.95</span></span>
+<span class="line"><span>                                # 退出码 1</span></span></code></pre></div><p><code>sys.exit(arg)</code> 通过抛出 <code>SystemExit</code> 退出；整数参数 <code>0</code> 表示成功，非零表示异常终止。CI 读取进程退出码：<code>0</code> 放行，非零判红。</p><hr><h2 id="四、练习-面经检索评测-cli" tabindex="-1">四、练习：面经检索评测 CLI <a class="header-anchor" href="#四、练习-面经检索评测-cli" aria-label="Permalink to &quot;四、练习：面经检索评测 CLI&quot;">​</a></h2><h3 id="任务" tabindex="-1">任务 <a class="header-anchor" href="#任务" aria-label="Permalink to &quot;任务&quot;">​</a></h3><ol><li>新建 <code>retrieval_eval.py</code>，用 <code>argparse</code> 支持 <code>--corpus</code>、<code>--eval</code>、<code>--baseline</code>、<code>--k</code>（默认 3）、<code>--min-hit</code>（默认 0.8）、<code>--tol</code>（默认 0.05）、<code>--update-baseline</code>（开关）。</li><li><code>corpus.json</code> 为 <code>{&quot;d1&quot;: &quot;面经正文&quot;, ...}</code>；评测集为 <code>[{&quot;query&quot;: &quot;...&quot;, &quot;relevant&quot;: [&quot;d1&quot;]}, ...]</code>。</li><li>复用示例 2 的 <code>TfidfRetriever</code> 与示例 3 的指标函数；<code>--update-baseline</code> 时用 <code>json.dumps</code> 把当前指标写成基线文件，否则读取基线并调用 <code>gate()</code>。</li><li>通过时打印指标并 <code>return 0</code>；任一门禁不满足打印 <code>[FAIL] ...</code> 并 <code>return 1</code>；<code>main()</code> 的返回值交给 <code>sys.exit()</code>。</li><li>自测三种退出码：更新基线 → 0；指标不变再跑 → 0；往评测集加一条检索不到的 query → 命中率下滑 → 1。</li></ol><h3 id="数据文件" tabindex="-1">数据文件 <a class="header-anchor" href="#数据文件" aria-label="Permalink to &quot;数据文件&quot;">​</a></h3><p><code>corpus.json</code>：</p><div class="language-json vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">json</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">{</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">  &quot;d1&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;字节跳动 前端 二面 问了 React hooks 原理和虚拟 DOM diff&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">,</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">  &quot;d2&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;腾讯 后端 一面 Golang 协程调度和垃圾回收&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">,</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">  &quot;d3&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;阿里巴巴 前端 一面 CSS 盒模型 和 事件循环&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">,</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">  &quot;d4&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;美团 后端 二面 MySQL 索引和事务隔离级别&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">,</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">  &quot;d5&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;字节跳动 前端 三面 系统设计 短链服务&quot;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">}</span></span></code></pre></div><p><code>evalset.json</code>（评测集）：</p><div class="language-json vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">json</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">[</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  {</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">&quot;query&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;字节 前端 React hooks&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">, </span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">&quot;relevant&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: [</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;d1&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">]},</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  {</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">&quot;query&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;MySQL 索引 事务&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">, </span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">&quot;relevant&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: [</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;d4&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">]},</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  {</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">&quot;query&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;CSS 盒模型&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">, </span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">&quot;relevant&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: [</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;d3&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">]},</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  {</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">&quot;query&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;Golang 协程&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">, </span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">&quot;relevant&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: [</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;d2&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">]}</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">]</span></span></code></pre></div><h3 id="参考答案-retrieval-eval-py" tabindex="-1">参考答案（<code>retrieval_eval.py</code>） <a class="header-anchor" href="#参考答案-retrieval-eval-py" aria-label="Permalink to &quot;参考答案（\`retrieval_eval.py\`）&quot;">​</a></h3><div class="language-text vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">text</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>from __future__ import annotations</span></span>
+<span class="line"><span>import re, math, json, sys, argparse</span></span>
+<span class="line"><span>from collections import Counter</span></span>
+<span class="line"><span>from dataclasses import dataclass, field, asdict</span></span>
+<span class="line"><span>from statistics import fmean</span></span>
+<span class="line"><span>from pathlib import Path</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>_ASCII = re.compile(r&quot;[a-z0-9]+&quot;)</span></span>
+<span class="line"><span>_CJK = re.compile(r&quot;[一-鿿]+&quot;)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>def tokenize(text):</span></span>
+<span class="line"><span>    text = text.lower()</span></span>
+<span class="line"><span>    out = list(_ASCII.findall(text))</span></span>
+<span class="line"><span>    for run in _CJK.findall(text):</span></span>
+<span class="line"><span>        out.extend([run] if len(run) == 1 else [run[i:i + 2] for i in range(len(run) - 1)])</span></span>
+<span class="line"><span>    return out</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>@dataclass</span></span>
+<span class="line"><span>class Example:</span></span>
+<span class="line"><span>    query: str</span></span>
+<span class="line"><span>    relevant: list = field(default_factory=list)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>@dataclass</span></span>
+<span class="line"><span>class Metrics:</span></span>
+<span class="line"><span>    hit_rate: float</span></span>
+<span class="line"><span>    recall_at_k: float</span></span>
+<span class="line"><span>    mrr: float</span></span>
+<span class="line"><span>    k: int</span></span>
+<span class="line"><span>    per_query: list = field(default_factory=list)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>class TfidfRetriever:</span></span>
+<span class="line"><span>    &quot;&quot;&quot;纯标准库 TF-IDF 检索器；生产环境可把 rank() 换成向量/嵌入模型（可选依赖）。&quot;&quot;&quot;</span></span>
+<span class="line"><span>    def __init__(self, docs):</span></span>
+<span class="line"><span>        self.ids = list(docs)</span></span>
+<span class="line"><span>        self.tf = [Counter(tokenize(docs[i])) for i in self.ids]</span></span>
+<span class="line"><span>        self.df = Counter(t for vec in self.tf for t in vec)</span></span>
+<span class="line"><span>        self.n = len(self.ids)</span></span>
+<span class="line"><span>    def _idf(self, t):</span></span>
+<span class="line"><span>        return math.log((1 + self.n) / (1 + self.df[t])) + 1.0</span></span>
+<span class="line"><span>    def _vec(self, counts):</span></span>
+<span class="line"><span>        v = {t: (1 + math.log(c)) * self._idf(t) for t, c in counts.items()}</span></span>
+<span class="line"><span>        norm = math.sqrt(sum(x * x for x in v.values())) or 1.0</span></span>
+<span class="line"><span>        return {t: x / norm for t, x in v.items()}</span></span>
+<span class="line"><span>    def rank(self, query, k):</span></span>
+<span class="line"><span>        qv = self._vec(Counter(tokenize(query)))</span></span>
+<span class="line"><span>        scored = sorted(</span></span>
+<span class="line"><span>            ((sum(qv[t] * self._vec(c).get(t, 0.0) for t in qv), i)</span></span>
+<span class="line"><span>             for i, c in zip(self.ids, self.tf)),</span></span>
+<span class="line"><span>            key=lambda x: (-x[0], x[1]))</span></span>
+<span class="line"><span>        return [i for _, i in scored[:k]]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>def reciprocal_rank(ranked, relevant):</span></span>
+<span class="line"><span>    rel = set(relevant)</span></span>
+<span class="line"><span>    for pos, doc_id in enumerate(ranked, start=1):</span></span>
+<span class="line"><span>        if doc_id in rel:</span></span>
+<span class="line"><span>            return 1.0 / pos</span></span>
+<span class="line"><span>    return 0.0</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>def evaluate(retriever, examples, k):</span></span>
+<span class="line"><span>    hits, recalls, rrs, per = [], [], [], []</span></span>
+<span class="line"><span>    for ex in examples:</span></span>
+<span class="line"><span>        ranked = retriever.rank(ex.query, k)</span></span>
+<span class="line"><span>        rel = set(ex.relevant)</span></span>
+<span class="line"><span>        hit = 1.0 if rel &amp; set(ranked) else 0.0</span></span>
+<span class="line"><span>        rec = len(rel &amp; set(ranked)) / len(rel) if rel else 0.0</span></span>
+<span class="line"><span>        rr = reciprocal_rank(ranked, ex.relevant)</span></span>
+<span class="line"><span>        hits.append(hit); recalls.append(rec); rrs.append(rr)</span></span>
+<span class="line"><span>        per.append({&quot;query&quot;: ex.query, &quot;hit&quot;: hit, &quot;recall&quot;: rec, &quot;rr&quot;: rr})</span></span>
+<span class="line"><span>    return Metrics(fmean(hits), fmean(recalls), fmean(rrs), k, per)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>def load_json(path):</span></span>
+<span class="line"><span>    return json.loads(Path(path).read_text(encoding=&quot;utf-8&quot;))</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>def gate(current, baseline, min_hit, tol):</span></span>
+<span class="line"><span>    ok = True</span></span>
+<span class="line"><span>    if current.hit_rate &lt; min_hit:</span></span>
+<span class="line"><span>        print(f&quot;[FAIL] hit_rate {current.hit_rate:.3f} &lt; 下限 {min_hit}&quot;)</span></span>
+<span class="line"><span>        ok = False</span></span>
+<span class="line"><span>    if current.hit_rate &lt; baseline[&quot;hit_rate&quot;] - tol:</span></span>
+<span class="line"><span>        print(f&quot;[FAIL] hit_rate 低于基线 {baseline[&#39;hit_rate&#39;]:.3f} - 容差 {tol}&quot;)</span></span>
+<span class="line"><span>        ok = False</span></span>
+<span class="line"><span>    if ok:</span></span>
+<span class="line"><span>        print(&quot;[OK] 无回归&quot;)</span></span>
+<span class="line"><span>    return ok</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>def main(argv=None):</span></span>
+<span class="line"><span>    p = argparse.ArgumentParser(description=&quot;面经检索评测 + 回归门禁&quot;)</span></span>
+<span class="line"><span>    p.add_argument(&quot;--corpus&quot;, required=True)</span></span>
+<span class="line"><span>    p.add_argument(&quot;--eval&quot;, required=True)</span></span>
+<span class="line"><span>    p.add_argument(&quot;--baseline&quot;, required=True)</span></span>
+<span class="line"><span>    p.add_argument(&quot;--k&quot;, type=int, default=3)</span></span>
+<span class="line"><span>    p.add_argument(&quot;--min-hit&quot;, type=float, default=0.8)</span></span>
+<span class="line"><span>    p.add_argument(&quot;--tol&quot;, type=float, default=0.05)</span></span>
+<span class="line"><span>    p.add_argument(&quot;--update-baseline&quot;, action=&quot;store_true&quot;)</span></span>
+<span class="line"><span>    args = p.parse_args(argv)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    docs = load_json(args.corpus)</span></span>
+<span class="line"><span>    examples = [Example(r[&quot;query&quot;], list(r[&quot;relevant&quot;])) for r in load_json(args.eval)]</span></span>
+<span class="line"><span>    m = evaluate(TfidfRetriever(docs), examples, args.k)</span></span>
+<span class="line"><span>    print(f&quot;hit_rate={m.hit_rate:.3f}  recall@{m.k}={m.recall_at_k:.3f}  mrr={m.mrr:.3f}&quot;)</span></span>
+<span class="line"><span>    for row in m.per_query:</span></span>
+<span class="line"><span>        print(f&quot;  {row[&#39;hit&#39;]:.0f}/{row[&#39;recall&#39;]:.2f}/{row[&#39;rr&#39;]:.2f}  {row[&#39;query&#39;]}&quot;)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    if args.update_baseline:</span></span>
+<span class="line"><span>        Path(args.baseline).write_text(</span></span>
+<span class="line"><span>            json.dumps(asdict(m), ensure_ascii=False, indent=2), encoding=&quot;utf-8&quot;)</span></span>
+<span class="line"><span>        print(f&quot;[OK] 基线已写入 {args.baseline}&quot;)</span></span>
+<span class="line"><span>        return 0</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    baseline = load_json(args.baseline)</span></span>
+<span class="line"><span>    return 0 if gate(m, baseline, args.min_hit, args.tol) else 1</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>if __name__ == &quot;__main__&quot;:</span></span>
+<span class="line"><span>    sys.exit(main())</span></span></code></pre></div><h3 id="三种退出码的实测输出" tabindex="-1">三种退出码的实测输出 <a class="header-anchor" href="#三种退出码的实测输出" aria-label="Permalink to &quot;三种退出码的实测输出&quot;">​</a></h3><div class="language-text vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">text</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>$ python retrieval_eval.py --corpus corpus.json --eval evalset.json --baseline baseline.json --update-baseline</span></span>
+<span class="line"><span>hit_rate=1.000  recall@3=1.000  mrr=1.000</span></span>
+<span class="line"><span>  1/1.00/1.00  字节 前端 React hooks</span></span>
+<span class="line"><span>  1/1.00/1.00  MySQL 索引 事务</span></span>
+<span class="line"><span>  1/1.00/1.00  CSS 盒模型</span></span>
+<span class="line"><span>  1/1.00/1.00  Golang 协程</span></span>
+<span class="line"><span>[OK] 基线已写入 baseline.json            # 退出码 0</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>$ python retrieval_eval.py --corpus corpus.json --eval evalset.json --baseline baseline.json</span></span>
+<span class="line"><span>hit_rate=1.000  recall@3=1.000  mrr=1.000</span></span>
+<span class="line"><span>  ...（同上）</span></span>
+<span class="line"><span>[OK] 无回归                              # 退出码 0</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 评测集追加一条 {&quot;query&quot;: &quot;Python 装饰器&quot;, &quot;relevant&quot;: [&quot;d9&quot;]}（语料中没有 d9）后再跑</span></span>
+<span class="line"><span>hit_rate=0.800  recall@3=0.800  mrr=0.800</span></span>
+<span class="line"><span>  ...（前四条均命中）</span></span>
+<span class="line"><span>  0/0.00/0.00  Python 装饰器</span></span>
+<span class="line"><span>[FAIL] hit_rate 低于基线 1.000 - 容差 0.05   # 退出码 1</span></span></code></pre></div><p>最后一次的命中率为 4/5 = 0.8，<code>0.8 &lt; 0.8</code> 不成立，因此「低于下限」分支不触发，只有「低于基线」分支报错。要同时触发两条，可把 <code>--min-hit</code> 调到 0.85。</p><p>接 CI 时，在流水线里跑这条命令即可：退出码非零就判红，拦住会让检索质量下滑的提交。</p><hr><h2 id="五、面试常问的三个追问" tabindex="-1">五、面试常问的三个追问 <a class="header-anchor" href="#五、面试常问的三个追问" aria-label="Permalink to &quot;五、面试常问的三个追问&quot;">​</a></h2><h3 id="追问-1-命中率、recall-k、precision-k、mrr-有什么区别-检索问答为什么盯命中率" tabindex="-1">追问 1：命中率、recall@k、precision@k、MRR 有什么区别？检索问答为什么盯命中率？ <a class="header-anchor" href="#追问-1-命中率、recall-k、precision-k、mrr-有什么区别-检索问答为什么盯命中率" aria-label="Permalink to &quot;追问 1：命中率、recall@k、precision@k、MRR 有什么区别？检索问答为什么盯命中率？&quot;">​</a></h3><p>命中率是二值指标，只看 top-k 里有没有相关文档；recall@k 看相关文档被取回的比例，衡量漏检；precision@k 看 top-k 里相关的比例，衡量噪声；MRR 看首个相关文档排得多前。在「检索 + 生成」的问答里，生成模型读的是 top-k 拼出的上下文，「需要的证据在不在上下文里」往往比「第一条对不对」更关键，所以门禁优先盯命中率与 recall@k，用 precision@k 观察噪声、用 MRR 观察排序。这是工程判断，不是文档结论。</p><h3 id="追问-2-为什么用-statistics-fmean-而不是-sum-len" tabindex="-1">追问 2：为什么用 <code>statistics.fmean</code> 而不是 <code>sum(...)/len(...)</code>？ <a class="header-anchor" href="#追问-2-为什么用-statistics-fmean-而不是-sum-len" aria-label="Permalink to &quot;追问 2：为什么用 \`statistics.fmean\` 而不是 \`sum(...)/len(...)\`？&quot;">​</a></h3><p><code>fmean</code> 把数据转为 float 并总是返回 float，空数据会抛 <code>StatisticsError</code>，让「评测集为空或加载失败」这类问题尽早暴露；<code>sum([]) / len([])</code> 则是 <code>ZeroDivisionError</code>，数据异常时还可能悄悄算出误导性的 0。它属于标准库，评测脚本在 CI 里无需额外安装依赖；超大规模评测再考虑 numpy 等。</p><h3 id="追问-3-回归门禁在-ci-里怎么卡住一次提交-阈值怎么定" tabindex="-1">追问 3：回归门禁在 CI 里怎么卡住一次提交？阈值怎么定？ <a class="header-anchor" href="#追问-3-回归门禁在-ci-里怎么卡住一次提交-阈值怎么定" aria-label="Permalink to &quot;追问 3：回归门禁在 CI 里怎么卡住一次提交？阈值怎么定？&quot;">​</a></h3><p>不达标时 <code>sys.exit(1)</code>，CI 读到非零退出码就把构建判红。判据通常两条并行：<strong>绝对下限</strong>（命中率不得低于某值）与<strong>相对基线容差</strong>（低于「基线 − 容差」视为回退）。基线是上一次验收的指标，用 <code>--update-baseline</code> 落盘更新。阈值先取当前稳定值作基线，再逐步收紧下限、缩小容差；容差用来吸收评测集的小幅波动，避免门禁过于敏感。</p><hr><h2 id="六、参考资料" tabindex="-1">六、参考资料 <a class="header-anchor" href="#六、参考资料" aria-label="Permalink to &quot;六、参考资料&quot;">​</a></h2><table tabindex="0"><thead><tr><th>来源</th><th>覆盖内容</th></tr></thead><tbody><tr><td><a href="https://docs.python.org/3.12/" target="_blank" rel="noreferrer">Python 3.12 官方文档</a>：dataclasses、statistics、json、argparse、pathlib、sys</td><td>标准库行为与退出码约定</td></tr><tr><td><a href="https://peps.python.org/pep-0563/" target="_blank" rel="noreferrer">PEP 563</a></td><td><code>from __future__ import annotations</code></td></tr><tr><td><a href="https://github.com/letuhao/lore-weave/blob/main/docs/05_qa/rag_quality_metrics.md" target="_blank" rel="noreferrer">RAG Quality Metrics Reference</a>（非官方参考）</td><td>Hit Rate / Recall@K / Precision@K / MRR 的整理</td></tr></tbody></table><p><strong>未覆盖</strong>：本页不调用任何外部模型接口，不涉及具体厂商 API；「可把 <code>rank()</code> 换成向量检索」仅说明可替换的接缝。</p>`,66)])])}const k=a(t,[["render",l]]);export{h as __pageData,k as default};
