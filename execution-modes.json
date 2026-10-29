@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "project": "learn-python",
+  "principle": "执行环境是学习合同的一部分；浏览器运行成功不能替代真实后端交付证据",
+  "modes": [
+    {
+      "id": "browser",
+      "runtime": "Pyodide 0.24.1",
+      "use_for": [
+        "python-core",
+        "python-engineering",
+        "python-data-contracts",
+        "纯函数检索与指标练习"
+      ],
+      "capabilities": [
+        "无安装运行",
+        "确定性输出",
+        "本地 UI 交互"
+      ],
+      "limits": [
+        "不承担真实网络、原生扩展、数据库、子进程或生产部署证明",
+        "禁止注入真实凭据"
+      ],
+      "evidence": "教学练习和首次反馈，不直接授予生产级掌握"
+    },
+    {
+      "id": "sandbox",
+      "runtime": "隔离 Python 3.11+ 容器",
+      "use_for": [
+        "async/http",
+        "FastAPI",
+        "工具调用",
+        "知识库摄取",
+        "评测和故障注入"
+      ],
+      "capabilities": [
+        "依赖锁定",
+        "文件/进程资源限制",
+        "可复现测试",
+        "合成数据"
+      ],
+      "limits": [
+        "网络默认关闭；外部 API 通过 mock 或明确授权的代理适配器"
+      ],
+      "evidence": "hard-gate 案例的测试、日志、指标和 artifact"
+    },
+    {
+      "id": "local",
+      "runtime": "学习者本机 Python 3.11+",
+      "use_for": [
+        "真实项目骨架",
+        "Docker/CI",
+        "本地模型或企业 API 适配"
+      ],
+      "capabilities": [
+        "完整工具链",
+        "真实编辑器和命令行",
+        "可接用户自己的安全环境"
+      ],
+      "limits": [
+        "环境差异必须记录；不得把本机成功泛化为课程事实"
+      ],
+      "evidence": "学习者提交的命令、版本、测试和脱敏产物"
+    }
+  ],
+  "routing_rules": [
+    "节点声明 execution_mode；未声明时默认为 browser，仅允许作为教学材料",
+    "涉及网络、数据库、子进程、FastAPI、Docker 或 Agent 副作用时必须升级到 sandbox/local",
+    "所有外部输入、工具参数和 LLM 输出都按不可信数据处理",
+    "真实凭据只存在于用户授权运行环境，站点和课程仓库只使用 mock、fixture 或脱敏回执"
+  ]
+}
