@@ -13,7 +13,7 @@
 - 用 golden set、recall@k、MRR、引用覆盖率和任务成功率做回归；
 - 通过 Docker/CI 交付并能在面试中解释关键取舍。
 
-课程完整能力合同见 [curriculum.json](./curriculum.json)，执行环境见 [execution-modes.json](./execution-modes.json)。
+课程完整能力合同见 [curriculum.json](./curriculum.json)，执行环境见 [execution-modes.json](./execution-modes.json)，统一工作项见 [workflow#651](https://github.com/zenHeart/workflow/issues/651)。
 
 ## 学习路径
 

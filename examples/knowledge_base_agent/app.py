@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+from copy import deepcopy
 from pathlib import Path
 from statistics import fmean
 
@@ -18,6 +19,8 @@ def allowed(doc: dict, role: str, tenant: str) -> bool:
     return tenant == doc["tenant"] and role in doc["allowed_roles"]
 
 def rank(query: str, top_k: int = 3, role: str = "tester", tenant: str = "test-bank") -> list[dict]:
+    if type(top_k) is not int or top_k < 1:
+        raise ValueError("top_k must be a positive integer")
     query_terms = set(tokenize(query))
     rows = []
     for doc_id, doc in CORPUS.items():
@@ -29,7 +32,7 @@ def rank(query: str, top_k: int = 3, role: str = "tester", tenant: str = "test-b
         rows.append((score, doc_id))
     rows.sort(key=lambda item: (-item[0], item[1]))
     return [
-        {"id": doc_id, "score": score, **CORPUS[doc_id]}
+        {"id": doc_id, "score": score, **deepcopy(CORPUS[doc_id])}
         for score, doc_id in rows[:top_k]
         if score > 0
     ]
@@ -39,7 +42,7 @@ def get_doc(doc_id: str, role: str = "tester", tenant: str = "test-bank") -> dic
         raise KeyError("unknown document")
     if not allowed(CORPUS[doc_id], role, tenant):
         raise PermissionError("document is outside the role or tenant scope")
-    return {"id": doc_id, "version": "fixture-v1", **CORPUS[doc_id]}
+    return {"id": doc_id, "version": "fixture-v1", **deepcopy(CORPUS[doc_id])}
 
 def answer(query: str, role: str = "tester", tenant: str = "test-bank") -> dict:
     hits = rank(query, role=role, tenant=tenant)
@@ -50,7 +53,8 @@ def answer(query: str, role: str = "tester", tenant: str = "test-bank") -> dict:
             "citations": [],
             "trace": {"query": query, "role": role, "tenant": tenant}
         }
-    citations = [get_doc(hit["id"], role, tenant)["id"] for hit in hits]
+    docs = [get_doc(hit["id"], role, tenant) for hit in hits]
+    citations = [{"id": doc["id"], "version": doc["version"]} for doc in docs]
     return {
         "status": "answered",
         "answer": "基于合成知识库返回候选证据，请继续核验引用内容。",
@@ -66,28 +70,58 @@ def reciprocal_rank(ranked: list[str], relevant: list[str]) -> float:
     return 0.0
 
 def evaluate() -> dict:
-    hits, recalls, mrrs, permission_checks = [], [], [], []
+    hits, recalls, mrrs, permission_checks, citation_checks, status_checks = [], [], [], [], [], []
+    refusal_queries = 0
+    if not isinstance(EVALSET, list):
+        raise ValueError("evalset must be a list")
     for item in EVALSET:
+        if not isinstance(item, dict) or not isinstance(item.get("query"), str) or not item["query"].strip():
+            raise ValueError("each evaluation case requires a nonempty query")
+        expected = item.get("expect_status", "answered")
+        relevant = item.get("relevant")
+        if expected not in {"answered", "refused"} or not isinstance(relevant, list) or not relevant or not all(isinstance(doc_id, str) for doc_id in relevant):
+            raise ValueError("each evaluation case requires a valid status and nonempty relevant document IDs")
         role = item.get("role", "tester")
         tenant = item.get("tenant", "test-bank")
         result = answer(item["query"], role, tenant)
-        if item.get("expect_status") == "refused":
-            permission_checks.append(float(result["status"] == "refused"))
-            continue
-        ranked = [row["id"] for row in rank(item["query"], role=role, tenant=tenant)]
-        relevant = set(item["relevant"])
-        hits.append(float(bool(relevant & set(ranked))))
-        recalls.append(len(relevant & set(ranked)) / len(relevant))
-        mrrs.append(reciprocal_rank(ranked, item["relevant"]))
+        # Assess the delivered citations, never an independent rerun of retrieval.
+        citations = result.get("citations")
+        shaped = isinstance(citations, list) and all(isinstance(c, dict) and isinstance(c.get("id"), str) for c in citations)
+        ranked = [c["id"] for c in citations] if shaped else []
         visible_ids = {doc_id for doc_id, doc in CORPUS.items() if allowed(doc, role, tenant)}
-        permission_checks.append(float(set(ranked) <= visible_ids))
+        permitted = shaped and set(ranked) <= visible_ids
+        empty_refusal = result.get("status") != "refused" or citations == []
+        permission_checks.append(float(permitted and empty_refusal))
+        status_checks.append(float(result.get("status") == expected and empty_refusal))
+        if expected == "refused":
+            refusal_queries += 1
+            continue
+        versioned = permitted and all(c.get("version") == get_doc(c["id"], role, tenant)["version"] for c in citations)
+        citation_checks.append(float(result.get("status") == "answered" and 0 < len(ranked) <= 3 and len(ranked) == len(set(ranked)) and versioned))
+        wanted = set(relevant)
+        hits.append(float(bool(wanted & set(ranked[:3]))))
+        recalls.append(len(wanted & set(ranked[:3])) / len(wanted))
+        mrrs.append(reciprocal_rank(ranked[:3], relevant))
+    metrics = {
+        "hit_rate": fmean(hits) if hits else 0.0,
+        "recall_at_3": fmean(recalls) if recalls else 0.0,
+        "mrr": fmean(mrrs) if mrrs else 0.0,
+        "permission_pass_rate": fmean(permission_checks) if permission_checks else 0.0,
+        "citation_coverage": fmean(citation_checks) if citation_checks else 0.0,
+        "status_pass_rate": fmean(status_checks) if status_checks else 0.0,
+    }
+    thresholds = {metric: 0.9 if metric == "mrr" else 1.0 for metric in metrics}
+    failures = [metric for metric, value in metrics.items() if value < thresholds[metric]]
+    if len(EVALSET) < 8 or not hits or not refusal_queries:
+        failures.append("coverage: require at least 8 queries, including answer and refusal cases")
     return {
         "queries": len(EVALSET),
         "answer_queries": len(hits),
-        "hit_rate": round(fmean(hits), 3) if hits else 0.0,
-        "recall_at_3": round(fmean(recalls), 3) if recalls else 0.0,
-        "mrr": round(fmean(mrrs), 3) if mrrs else 0.0,
-        "permission_pass_rate": round(fmean(permission_checks), 3) if permission_checks else 0.0
+        "refusal_queries": refusal_queries,
+        **{metric: round(value, 3) for metric, value in metrics.items()},
+        "thresholds": thresholds,
+        "passed": not failures,
+        "failures": failures,
     }
 
 def main(argv: list[str]) -> int:
@@ -101,8 +135,13 @@ def main(argv: list[str]) -> int:
         print(json.dumps(answer(query, role, tenant), ensure_ascii=False, indent=2))
         return 0
     if argv[1] == "eval":
-        print(json.dumps(evaluate(), ensure_ascii=False, indent=2))
-        return 0
+        try:
+            report = evaluate()
+        except (ValueError, TypeError, KeyError) as error:
+            print(json.dumps({"passed": False, "error": str(error)}, ensure_ascii=False))
+            return 2
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+        return 0 if report["passed"] else 1
     print("unknown command")
     return 2
 

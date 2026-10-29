@@ -55,5 +55,14 @@
     "role": "tester",
     "tenant": "platform",
     "expect_status": "refused"
+  },
+  {
+    "query": "外部状态",
+    "relevant": [
+      "d6"
+    ],
+    "role": "reviewer",
+    "tenant": "test-bank",
+    "expect_status": "refused"
   }
 ]

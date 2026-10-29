@@ -191,7 +191,8 @@
     {
       "id": "learn-llm",
       "url": "https://github.com/zenHeart/learn-llm",
-      "locator": "chapters/02-python-foundation.md, 13-rag.md, 15-agent-tools.md, 21-eval-safety-cloud.md",
+      "locator": "docs/chapters/02-python-foundation.md, docs/chapters/13-rag.md, docs/chapters/15-agent-tools.md, docs/chapters/21-eval-safety-cloud.md",
+      "revision": "6cfa538786447b75b778ddbfb3406f388bacf072",
       "accessed_at": "2026-10-30",
       "scope": "从 Python 桥接到 LLM/Agent 的跨仓课程"
     },
@@ -351,7 +352,7 @@
         "cost_mode": "zero-cost",
         "active_minutes": 180,
         "external_calls": [],
-        "network": false,
+        "network": "disabled; use local synthetic fixtures only",
         "fixture_role": "hard-gate",
         "deterministic": true
       }
@@ -404,7 +405,7 @@
         "cost_mode": "zero-cost",
         "active_minutes": 120,
         "external_calls": [],
-        "network": false,
+        "network": "disabled; use local synthetic fixtures only",
         "fixture_role": "teaching-fixture-candidate",
         "deterministic": true
       }
@@ -429,7 +430,7 @@
         "延迟复测可从空接口重建关键函数"
       ],
       "environment": "Python 3.11+；CPU 即可；后续进入 learn-llm",
-      "entry": "https://github.com/zenHeart/learn-llm/tree/main/docs/chapters",
+      "entry": "docs/tutorial/learning-path.md",
       "transfer": "将字符级示例改造成测试规则或面经语料，并说明哪些抽象保持不变",
       "delayed_check": "一周后无提示解释 Attention 的 mask、shape 和缓存边界",
       "provenance": "designed",
@@ -450,7 +451,7 @@
         "cost_mode": "zero-cost",
         "active_minutes": 180,
         "external_calls": [],
-        "network": false,
+        "network": "disabled; use local synthetic fixtures only",
         "fixture_role": "hard-gate",
         "deterministic": true
       }
@@ -508,7 +509,7 @@
         "cost_mode": "zero-cost",
         "active_minutes": 180,
         "external_calls": [],
-        "network": false,
+        "network": "disabled; use local synthetic fixtures only",
         "fixture_role": "hard-gate",
         "deterministic": true
       }

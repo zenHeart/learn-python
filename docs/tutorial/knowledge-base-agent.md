@@ -1,6 +1,6 @@
 # 知识库 Agent：从 Python 到真实业务系统
 
-本案例把 Python 语法、数据契约、检索、工具调用、权限、评测和恢复串成一个可验收的业务闭环。
+本案例以 Python 语法、数据契约、检索、工具调用、权限、评测和恢复构成终局验收合同。当前仓库的 [教学 fixture](https://github.com/zenHeart/learn-python/tree/master/examples/knowledge_base_agent) 只实现离线词元检索、ACL、文档 ID/版本引用、拒答与评测门禁；工具循环、MCP、模型调用和恢复仍是待完成的练习，整案保持 `verification: not-run`。
 
 ## 终局任务
 
@@ -13,7 +13,7 @@
 5. 记录 query、召回结果、工具调用、错误和耗时；
 6. 用 golden set 做 recall@k、MRR、引用覆盖率和回归门禁。
 
-教学 fixture 使用标准库即可运行。真实 embedding、LLM API、MCP Server 和数据库通过适配器替换，不能改变评测与安全合同。
+教学 fixture 使用标准库即可运行。后续练习需要自行实现 embedding、LLM API、MCP Server 和数据库适配器，并保持评测与安全合同。
 
 ## 系统边界
 
@@ -43,7 +43,7 @@ Agent Loop
 | 数据契约 | 类型注解不是运行时校验；外部输入必须验证 | 非法 top_k、未知 doc_id、越权 role |
 | Agent Loop | assistant tool call 与 tool result 必须按 ID 对齐 | 并发返回顺序改变后结果错配 |
 | 检索 | 命中率不等于答案正确；切块、召回、重排和引用是不同层 | 评测集命中下降但关键词检索未变 |
-| 权限 | 召回结果也要做访问控制 | 高分文档属于另一个角色 |
+| 权限 | 在检索前限定授权范围，读取文档与返回引用时复核；无权内容不得进入外部重排或模型上下文 | 高分文档属于另一个角色 |
 | 重试 | 响应丢失时先读状态，不能盲目重复副作用 | 已写入但响应超时 |
 | 评测 | 业务成功率、检索指标、引用覆盖率和成本延迟分别度量 | 只看 LLM 总分掩盖召回回归 |
 

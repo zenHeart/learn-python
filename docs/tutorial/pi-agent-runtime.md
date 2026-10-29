@@ -1,6 +1,6 @@
 # Pi Agent Runtime 定制化
 
-本页把知识库 Agent 继续推进为可复用的 Agent Runtime。目标不是添加一段 Prompt，而是让 Context、Skill、Tool、Hook/Policy 和 Eval 成为可版本化、可测试、可回滚的系统资产。
+本页定义把知识库 Agent 推进为可复用 Agent Runtime 的练习合同，让 Context、Skill、Tool、Hook/Policy 和 Eval 成为可版本化、可测试、可回滚的系统资产。下方只有策略函数示例；完整 Loop、checkpoint、Skill 加载和真实 Pi 集成尚待学习者实现，案例保持 `not-run`。
 
 ## 运行链
 
@@ -9,8 +9,9 @@
 → Context 选择与裁剪
 → Skill 路由
 → Tool schema 与权限检查
-→ Agent Loop
-→ Hook/Policy
+→ 执行前 Hook/Policy 与必要人工批准
+→ Agent Loop 中的工具执行（每次调用重新检查）
+→ 执行后结果验证与审计
 → 结果、引用、trace
 → Eval 与版本比较
 → 资产沉淀或回滚
@@ -42,8 +43,10 @@ class ToolSpec:
     requires_approval: bool
 
 def can_run(tool: ToolSpec, approved: bool) -> bool:
-    return tool.read_only or approved or not tool.requires_approval
+    return approved or (tool.read_only and not tool.requires_approval)
 ~~~
+
+`ToolSpec` 来自可信工具注册表，`approved` 来自绑定本次工具、参数和身份的审批记录，不能使用模型自行声明的字段。写工具默认需要批准；显式要求审批的只读工具也必须等待批准。此函数只回答审批是否满足，调用前仍须独立通过身份、范围与参数检查；批准不覆盖其他拒绝条件。
 
 然后把它迁移到真实模型、MCP、FastAPI 或 Pi 运行时。迁移时保持工具 schema、trace id、错误分类和评测集不变。
 
