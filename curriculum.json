@@ -310,11 +310,13 @@
         "examples/knowledge_base_agent/app.py",
         "examples/knowledge_base_agent/corpus.json",
         "examples/knowledge_base_agent/evalset.json",
-        "运行说明、指标报告和一次故障复盘"
+        "运行说明、指标报告和一次故障复盘",
+        "examples/knowledge_base_agent/test_app.py"
       ],
       "acceptance": [
         "至少 8 条 golden query 可重复评测",
-        "recall@3、MRR 和引用覆盖率均有记录",
+        "rank 在排序前完成 tenant/role ACL 过滤，越权文档不进入召回结果",
+        "recall@3、MRR、引用覆盖率和 permission_pass_rate 均有记录",
         "非法工具参数被拒绝",
         "重复请求不会产生第二次副作用",
         "工具异常后 Agent 能保留失败证据并安全结束"
