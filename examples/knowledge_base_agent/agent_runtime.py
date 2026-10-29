@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from concurrent.futures import Future, ThreadPoolExecutor, TimeoutError as FutureTimeout
 from dataclasses import dataclass, field
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from typing import Any, Callable
 
 
@@ -71,6 +71,20 @@ class ToolRegistry:
             raise ToolContractError(f"unknown tool: {name}") from exc
 
 
+def _run_with_deadline(spec: ToolSpec, arguments: dict[str, Any]) -> ToolResult | Any:
+    executor = ThreadPoolExecutor(max_workers=1)
+    future: Future[Any] = executor.submit(spec.handler, arguments)
+    try:
+        return future.result(timeout=spec.timeout_seconds)
+    except FutureTimeout as exc:
+        future.cancel()
+        raise TimeoutError("tool deadline exceeded") from exc
+    finally:
+        # Do not wait for a timed-out handler in the request path. A real
+        # service would cancel the downstream request through its context.
+        executor.shutdown(wait=False, cancel_futures=True)
+
+
 def execute_tool(
     call: ToolCall,
     registry: ToolRegistry,
@@ -84,7 +98,7 @@ def execute_tool(
     if call.id in state.results_by_call_id:
         previous = state.results_by_call_id[call.id]
         return ToolResult(
-            previous.tool_call_id,
+            call.id,
             previous.name,
             previous.status,
             previous.output,
@@ -111,17 +125,14 @@ def execute_tool(
         result = ToolResult(call.id, call.name, "approval_required", error="human approval required")
     else:
         state.status = "tool_running"
-        with ThreadPoolExecutor(max_workers=1) as pool:
-            future = pool.submit(spec.handler, call.arguments)
-            try:
-                output = future.result(timeout=spec.timeout_seconds)
-            except FutureTimeout:
-                future.cancel()
-                result = ToolResult(call.id, call.name, "timeout", error="tool deadline exceeded")
-            except Exception as exc:  # fixture intentionally reports structured failure
-                result = ToolResult(call.id, call.name, "failed", error=f"{type(exc).__name__}: {exc}")
-            else:
-                result = ToolResult(call.id, call.name, "ok", output=output)
+        try:
+            output = _run_with_deadline(spec, call.arguments)
+        except TimeoutError as exc:
+            result = ToolResult(call.id, call.name, "timeout", error=str(exc))
+        except Exception as exc:  # fixture intentionally reports structured failure
+            result = ToolResult(call.id, call.name, "failed", error=f"{type(exc).__name__}: {exc}")
+        else:
+            result = ToolResult(call.id, call.name, "ok", output=output)
         state.status = "tool_completed" if result.status == "ok" else "tool_failed"
 
     state.results_by_call_id[call.id] = result
@@ -149,7 +160,12 @@ def run_agent(
             raise ToolContractError("model response must be an object")
         if response.get("type") == "final":
             state.status = "completed"
-            return {"status": "completed", "answer": response.get("answer", ""), "steps": state.steps, "messages": messages}
+            return {
+                "status": "completed",
+                "answer": response.get("answer", ""),
+                "steps": state.steps,
+                "messages": messages,
+            }
         if response.get("type") != "tool_call":
             raise ToolContractError("model must return final or tool_call")
         call = ToolCall(
@@ -171,6 +187,16 @@ def run_agent(
         })
         if result.status in {"approval_required", "timeout", "failed"}:
             state.status = "stopped"
-            return {"status": "stopped", "reason": result.status, "steps": state.steps, "messages": messages}
+            return {
+                "status": "stopped",
+                "reason": result.status,
+                "steps": state.steps,
+                "messages": messages,
+            }
     state.status = "stopped"
-    return {"status": "stopped", "reason": "max_steps", "steps": state.steps, "messages": messages}
+    return {
+        "status": "stopped",
+        "reason": "max_steps",
+        "steps": state.steps,
+        "messages": messages,
+    }
