@@ -26,6 +26,7 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm install
+      - run: npm run check:course-portal
       - run: npm run docs:build
       - name: Setup Pages
         uses: actions/configure-pages@v4
