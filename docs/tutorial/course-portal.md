@@ -11,7 +11,7 @@ description: 从 Python Agent 到 Java、Go、LLM 原理的岗位能力学习入
 
 | 目标 | 入口 | 终局作品 |
 | --- | --- | --- |
-| Python Agent / 后端 | [Python 能力路径](/learn-python/tutorial/learning-path) | 带 ACL、引用、工具、评测和恢复的 Python Agent |
+| Python Agent / 后端 | [Python 能力路径](./learning-path) | 带 ACL、引用、工具、评测和恢复的 Python Agent |
 | Java 后端 / 企业 Agent | [learn-java](https://github.com/zenHeart/learn-java#readme) | Java 知识库 Agent、工具审批、事务与治理 |
 | Go Agent 平台 | [learn-engineering · Go 路径](https://github.com/zenHeart/learn-engineering/tree/main/docs/go) | Go 并发服务、检索、ToolRunner 与基础设施 |
 | LLM 原理 | [learn-llm](https://github.com/zenHeart/learn-llm#readme) | 从 Python、数学、Transformer 到 RAG/Agent/Eval |
@@ -21,11 +21,11 @@ description: 从 Python Agent 到 Java、Go、LLM 原理的岗位能力学习入
 
 以“前端工程师、Python 零基础、目标 Agent 应用岗位”为例：
 
-1. [先做诊断](/learn-python/tutorial/diagnostic)，确认 Python、测试、后端和数据契约断点。
-2. [Python 后端底座](/learn-python/tutorial/backend-foundation)，建立项目、类型、测试和 API 基础。
-3. [Agent Loop](/learn-python/tutorial/agent-loop) 与 [检索链路](/learn-python/tutorial/retrieval-pipeline)。
-4. [知识库 Agent](/learn-python/tutorial/knowledge-base-agent)，完成租户、角色、引用和拒答。
-5. [Pi Agent Runtime](/learn-python/tutorial/pi-agent-runtime)，理解 Context、Skill、Tool、Hook、Policy 和 Eval。
+1. [先做诊断](./diagnostic)，确认 Python、测试、后端和数据契约断点。
+2. [Python 后端底座](./backend-foundation)，建立项目、类型、测试和 API 基础。
+3. [Agent Loop](./agent-loop) 与 [检索链路](./retrieval-pipeline)。
+4. [知识库 Agent](./knowledge-base-agent)，完成租户、角色、引用和拒答。
+5. [Pi Agent Runtime](./pi-agent-runtime)，理解 Context、Skill、Tool、Hook、Policy 和 Eval。
 6. 进入 [learn-llm](https://github.com/zenHeart/learn-llm)，补齐模型、Attention、Transformer、RAG 和评测原理。
 7. 根据岗位需要迁移到 [Java](https://github.com/zenHeart/learn-java) 或 [Go](https://github.com/zenHeart/learn-engineering/tree/main/docs/go)。
 8. 用 [evals](https://github.com/zenHeart/evals/tree/main/data/eval-specs) 和 [web-interview](https://github.com/zenHeart/web-interview) 验收作品与面试表达。
@@ -50,8 +50,8 @@ PDF/EPUB 导出应复用同一份 versioned learning pack，并携带来源 comm
 
 ## 继续学习
 
-- [能力路径](/learn-python/tutorial/learning-path)
-- [诊断与掌握](/learn-python/tutorial/diagnostic)
-- [知识盲点](/learn-python/tutorial/gaps)
-- [Python 进度](/learn-python/progress)
+- [能力路径](./learning-path)
+- [诊断与掌握](./diagnostic)
+- [知识盲点](./gaps)
+- [Python 进度](../progress)
 - [统一 Learning OS 门户](https://learn.zenheart.site/learning-os/)
