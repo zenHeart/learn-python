@@ -46,6 +46,7 @@ module.exports = {
   themeConfig: {
     nav: [
       { text: '首页', link: '/' },
+      { text: '统一课程', link: '/tutorial/course-portal' },
       { text: '能力路径', link: '/tutorial/learning-path' },
       { text: '诊断', link: '/tutorial/diagnostic' },
       { text: '知识盲点', link: '/tutorial/gaps' },
@@ -55,10 +56,20 @@ module.exports = {
       {
         text: '🧭 能力路线',
         items: [
+          { text: '统一课程入口', link: '/tutorial/course-portal' },
           { text: '能力路径', link: '/tutorial/learning-path' },
           { text: '诊断与掌握', link: '/tutorial/diagnostic' },
           { text: 'Python 后端底座', link: '/tutorial/backend-foundation' },
           { text: '知识库 Agent 案例', link: '/tutorial/knowledge-base-agent' }
+        ]
+      },
+      {
+        text: '🌐 跨语言课程',
+        items: [
+          { text: 'Java 后端与 Agent', link: 'https://github.com/zenHeart/learn-java' },
+          { text: 'Go Agent 平台', link: 'https://github.com/zenHeart/learn-engineering/tree/main/docs/go' },
+          { text: 'LLM 原理与实践', link: 'https://github.com/zenHeart/learn-llm' },
+          { text: '面试证据合同', link: 'https://github.com/zenHeart/web-interview/pull/42' }
         ]
       },
       {
