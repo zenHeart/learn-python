@@ -15,6 +15,12 @@
 
 课程完整能力合同见 [curriculum.json](./curriculum.json)，执行环境见 [execution-modes.json](./execution-modes.json)，统一工作项见 [workflow#651](https://github.com/zenHeart/workflow/issues/651)。
 
+## 统一课程入口
+
+站点部署地址：[blog.zenheart.site/learn-python](https://blog.zenheart.site/learn-python/)。
+
+跨语言路线与岗位迁移见[统一课程入口](./docs/tutorial/course-portal.md)，它连接 Python、Java、Go、LLM 原理、评测和面试验收。
+
 ## 学习路径
 
 1. [Python 核心与 JS 对照](./docs/tutorial/begin.md)
