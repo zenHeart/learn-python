@@ -41,13 +41,17 @@ features:
 - 处理超时、重试、幂等、权限和人工确认；
 - 用评测集、trace、成本和延迟判断版本是否回归。
 
+## 统一课程入口
+
+需要同时学习 Python、Java、Go 和 LLM 原理时，先打开[统一课程入口](./tutorial/course-portal.md)。它按岗位目标组织主线和迁移顺序，并保留每门课程自己的能力合同、练习和验收。
+
 ## 推荐入口
 
 1. [先做诊断](./tutorial/diagnostic.md)，不要用自评跳过能力节点；
 2. [阅读能力路径](./tutorial/learning-path.md)，理解主线和可选分支；
 3. [从 Python 后端底座开始](./tutorial/backend-foundation.md)；
 4. [完成知识库 Agent 案例](./tutorial/knowledge-base-agent.md)；
-5. 再根据目标进入 Agent 应用、后端交付或 [LLM 原理课程](https://github.com/zenHeart/learn-llm)。
+5. 再根据目标进入 Agent 应用、后端交付或 [LLM 原理课程](https://github.com/zenHeart/learn-llm)；需要 Java/Go 平台能力时进入[跨语言课程入口](./tutorial/course-portal.md)。
 
 ~~~python
 # 浏览器练习只用于理解纯 Python 机制
